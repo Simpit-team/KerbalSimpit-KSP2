@@ -1,0 +1,23 @@
+{
+  "spec": "2.0",
+  "mod_id": "Simpit",
+  "author": "Tet",
+  "name": "Simpit",
+  "description": "Provides a serial connection interface for custom controllers.",
+  "source": "",
+  "version": "0.0.1",
+  "version_check": "",
+  "ksp2_version": {
+    "min": "0.1.5",
+    "max": "*"
+  },
+  "dependencies": [
+    {
+      "id": "com.github.x606.spacewarp",
+      "version": {
+        "min": "1.6.0",
+        "max": "*"
+      }
+    }
+  ]
+}
