@@ -10,6 +10,12 @@ using SpaceWarp.API.Game.Extensions;
 using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using UnityEngine;
+using KSP.Game;
+using KerbalSimpit.Serial;
+using System.IO.Ports;
+using KSP.Iteration.UI.Binding;
+using System.Reflection;
+//using System.ComponentModel.Primitives;
 
 namespace Simpit;
 
@@ -34,6 +40,10 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     private const string ToolbarOabButtonID = "BTN-SimpitOAB";
     private const string ToolbarKscButtonID = "BTN-SimpitKSC";
 
+    //Serial Port
+    string SerialPortName;
+    int SerialPortBaudRate;
+
     /// <summary>
     /// Runs when the mod is first initialized.
     /// </summary>
@@ -41,8 +51,26 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         base.OnInitialized();
 
+        Assembly ass = Assembly.LoadFile(Path.Combine(PluginFolderPath, "assets", "lib", "System.ComponentModel.Primitives.dll"));
+        Logger.LogDebug("Loaded dll: " + ass.ToString());
+        ass = Assembly.LoadFile(Path.Combine(PluginFolderPath, "assets", "lib", "System.IO.Ports.dll"));
+        Logger.LogDebug("Loaded dll: " + ass.ToString());
+
         Instance = this;
 
+        /*
+        // Fetch configuration values or create a default one if it does not exist
+        const string defaultComPort = "COMxx";
+        var comPortValue = Config.Bind<string>("Settings section", "Serial Port Name", defaultComPort, "Which Serial Port the controller uses. E.g. COM4");
+        SerialPortName = comPortValue.Value;
+
+        const int defaultBaudRate = 115200;
+        var baudRateValue = Config.Bind<int>("Settings section", "Baud Rate", defaultBaudRate, "Which speed the Serial Port uses. E.g. 115200");
+        SerialPortBaudRate = baudRateValue.Value;
+
+        // Log the config value into <KSP2 Root>/BepInEx/LogOutput.log
+        Logger.LogInfo($"Using Serial Port: {SerialPortName} with Baud Rate: {SerialPortBaudRate}");
+        */
         // Register Flight AppBar button
         Appbar.RegisterAppButton(
             ModName,
@@ -77,16 +105,9 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
                 _isWindowOpen = !_isWindowOpen;
             }
         );
-
+        
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(SimpitPlugin).Assembly);
-
-        // Fetch a configuration value or create a default one if it does not exist
-        const string defaultValue = "my default value";
-        var configValue = Config.Bind<string>("Settings section", "Option 1", defaultValue, "Option description");
-
-        // Log the config value into <KSP2 Root>/BepInEx/LogOutput.log
-        Logger.LogInfo($"Option 1: {configValue.Value}");
     }
 
     /// <summary>
@@ -122,13 +143,13 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 		if ( GUI.Button(new Rect(Instance._windowRect.width - 4 - 27, 4, 27, 27), AssetManager.GetAsset<Texture2D>($"{ModGuid}/images/cross.png")) )
             Instance.CloseWindow();
 
-        GUILayout.Label("Simpit - Provides a serial connection interface for custom controllers.");
+        //Add a text to the GUI
+        GUILayout.Label($"Using Serial Port: {Instance.SerialPortName} with Baud Rate: {Instance.SerialPortBaudRate}");
 
         //Add Buttons
-        if (GUI.Button(new Rect(9, 100, 100, 50), "100% GD"))
-            Instance.MyButtonPress();
-        if (GUI.Button(new Rect(9, 170, 100, 50), "0% Gear Up"))
-            Instance.MyButtonPress2();
+        if (GUI.Button(new Rect(9, 100, 100, 50), "Open"))
+            Instance.OpenPort();
+       // if (GUI.Button(new Rect(9, 170, 100, 50), "Close")) Instance.MyButtonPress2();
 		
 		
         GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -141,7 +162,55 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 		GameObject.Find(ToolbarKscButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
         _isWindowOpen = false;
     }
+    public void OpenPort()
+    {
+        SerialPort Port = new SerialPort("COM7", 115200, Parity.None, 8, StopBits.One);
+        Port.Open();
+        /*
+        KSPSerialPort port = new KSPSerialPort(Instance.SerialPortName, Instance.SerialPortBaudRate);
+        if (port.portStatus != KSPSerialPort.ConnectionStatus.CLOSED && port.portStatus != KSPSerialPort.ConnectionStatus.ERROR)
+        {
+            //Port already opened. Nothing to do.
+            return;
+        }
 
+        String portName = port.PortName;
+        if (portName.StartsWith("COM") || portName.StartsWith("/"))
+        {
+            if(portName.Equals("COMxx"))
+            {
+                Debug.LogWarning("Simpit : port name is default for port " + port.ID + ". Please provide a specific port the Simpit configs in the main menu.");
+                GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
+                {
+                    Tier = NotificationTier.Passive,
+                    Primary = new NotificationLineItemData { LocKey = "No Simpit Serial Port defined. Go to config (main menu -> mods) to set one." }
+                });
+                return;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Simpit : no port name is defined for port " + port.ID + ". Please check the Simpit configs in the main menu.");
+            return;
+        }
+
+        if (port.open())
+        {
+            Debug.Log(String.Format("KerbalSimpit: Opened {0}", portName));
+        }
+        else
+        {
+            Debug.Log(String.Format("KerbalSimpit: Unable to open {0}", portName));
+        }
+
+        // TODO Add this back in
+        /* Removed this section while porting to KSP2 to get initial stuff going
+        if (!DoEventDispatching)
+            StartEventDispatch();
+        */
+    }
+
+    /*
     private void MyButtonPress()
     {
         Logger.LogInfo("MyButtonPress");
@@ -156,6 +225,12 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             }
         }
         catch (Exception) { }
+
+        GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
+        {
+            Tier = NotificationTier.Passive,
+            Primary = new NotificationLineItemData { LocKey = "You successfully pressed a Simpit Button" }
+        });
     }
 
     private void MyButtonPress2()
@@ -173,5 +248,15 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         }
         catch (Exception) { }
     }
+
+    public void OnPacketReceived(byte Type, byte ID, byte[] buf)
+    {
+        GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
+        {
+            Tier = NotificationTier.Passive,
+            Primary = new NotificationLineItemData { LocKey = "Received Serial Packet" }
+        });
+    }
+    */
 }
 
