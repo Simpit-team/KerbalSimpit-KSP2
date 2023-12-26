@@ -1,9 +1,9 @@
 # Simpit
 Provides a serial connection interface for custom controllers.
 
-This is the KSP2 version of [Kerbal Simpit Revamped]https://github.com/Simpit-team/KerbalSimpitRevamped
+This is the KSP2 version of [Kerbal Simpit Revamped](https://github.com/Simpit-team/KerbalSimpitRevamped)
 
-It works with an accompanying [Arduino library]https://github.com/Simpit-team/KerbalSimpitRevamped-Arduino to make building hardware devices simpler.
+It works with an accompanying [Arduino library](https://github.com/Simpit-team/KerbalSimpitRevamped-Arduino) to make building hardware devices simpler.
 
 
 ## Setup for building
