@@ -43,6 +43,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     //Serial Port
     string SerialPortName;
     int SerialPortBaudRate;
+    KSPSerialPort port;
 
     /// <summary>
     /// Runs when the mod is first initialized.
@@ -58,7 +59,6 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
         Instance = this;
 
-        /*
         // Fetch configuration values or create a default one if it does not exist
         const string defaultComPort = "COMxx";
         var comPortValue = Config.Bind<string>("Settings section", "Serial Port Name", defaultComPort, "Which Serial Port the controller uses. E.g. COM4");
@@ -70,7 +70,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
         // Log the config value into <KSP2 Root>/BepInEx/LogOutput.log
         Logger.LogInfo($"Using Serial Port: {SerialPortName} with Baud Rate: {SerialPortBaudRate}");
-        */
+        
         // Register Flight AppBar button
         Appbar.RegisterAppButton(
             ModName,
@@ -147,9 +147,8 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         GUILayout.Label($"Using Serial Port: {Instance.SerialPortName} with Baud Rate: {Instance.SerialPortBaudRate}");
 
         //Add Buttons
-        if (GUI.Button(new Rect(9, 100, 100, 50), "Open"))
-            Instance.OpenPort();
-       // if (GUI.Button(new Rect(9, 170, 100, 50), "Close")) Instance.MyButtonPress2();
+        if (GUI.Button(new Rect(9, 100, 100, 50), "Open")) Instance.OpenPort();
+        if (GUI.Button(new Rect(9, 170, 100, 50), "Close")) Instance.ClosePort();
 		
 		
         GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -164,13 +163,12 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     }
     public void OpenPort()
     {
-        SerialPort Port = new SerialPort("COM7", 115200, Parity.None, 8, StopBits.One);
-        Port.Open();
-        /*
-        KSPSerialPort port = new KSPSerialPort(Instance.SerialPortName, Instance.SerialPortBaudRate);
+        //Create the Serial Port if necessary
+        if (port == null) port = new KSPSerialPort(Instance.SerialPortName, Instance.SerialPortBaudRate);
         if (port.portStatus != KSPSerialPort.ConnectionStatus.CLOSED && port.portStatus != KSPSerialPort.ConnectionStatus.ERROR)
         {
             //Port already opened. Nothing to do.
+            Logger.LogInfo(String.Format("Port {0} already opened. Nothing to do.", port.PortName));
             return;
         }
 
@@ -179,7 +177,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         {
             if(portName.Equals("COMxx"))
             {
-                Debug.LogWarning("Simpit : port name is default for port " + port.ID + ". Please provide a specific port the Simpit configs in the main menu.");
+                Logger.LogWarning("port name is default for port " + port.ID + ". Please provide a specific port the Simpit configs in the main menu.");
                 GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
                 {
                     Tier = NotificationTier.Passive,
@@ -190,17 +188,17 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         }
         else
         {
-            Debug.LogWarning("Simpit : no port name is defined for port " + port.ID + ". Please check the Simpit configs in the main menu.");
+            Logger.LogWarning("no port name is defined for port " + port.ID + ". Please check the Simpit configs in the main menu.");
             return;
         }
 
         if (port.open())
         {
-            Debug.Log(String.Format("KerbalSimpit: Opened {0}", portName));
+            Logger.LogInfo(String.Format("Opened port {0}", portName));
         }
         else
         {
-            Debug.Log(String.Format("KerbalSimpit: Unable to open {0}", portName));
+            Logger.LogInfo(String.Format("Unable to open port {0}", portName));
         }
 
         // TODO Add this back in
@@ -208,6 +206,13 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         if (!DoEventDispatching)
             StartEventDispatch();
         */
+    }
+
+    private void ClosePort()
+    {
+        if (port == null)  return;
+
+        port.close();
     }
 
     /*
@@ -248,6 +253,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         }
         catch (Exception) { }
     }
+    */
 
     public void OnPacketReceived(byte Type, byte ID, byte[] buf)
     {
@@ -257,6 +263,5 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             Primary = new NotificationLineItemData { LocKey = "Received Serial Packet" }
         });
     }
-    */
 }
 

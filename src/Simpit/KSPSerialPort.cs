@@ -2,6 +2,8 @@
 
 using System.IO.Ports;
 using Simpit;
+using RTG;
+using UnityEngine;
 
 namespace KerbalSimpit.Serial
 {
@@ -11,8 +13,7 @@ namespace KerbalSimpit.Serial
     */
 
     public class KSPSerialPort
-    {
-        /*
+    {        
         public string PortName;
         public int BaudRate;
         public  byte ID;
@@ -71,14 +72,13 @@ namespace KerbalSimpit.Serial
 
             DoSerial = false;
 
-            Port = new SerialPort(PortName, BaudRate, Parity.None,
-                                  8, StopBits.One);
+            Port = new SerialPort(PortName, BaudRate, Parity.None, 8, StopBits.One);
 
             // To allow communication from a Pi Pico, the DTR seems to be mandatory to allow the connection
             // This does not seem to prevent communication from Arduino.
             Port.DtrEnable = true;
 
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("KerbalSimpit: Using serial polling thread for {0}", pn));
+            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Using serial polling thread for {0}", pn));
         }
 
         // Open the serial port
@@ -88,6 +88,7 @@ namespace KerbalSimpit.Serial
                 try
                 {
                     Port.Open();
+
                     SerialWriteThread = new Thread(SerialWriteQueueRunner);
                     SerialReadThread = new Thread(SerialPollingWorker);
 
@@ -102,7 +103,7 @@ namespace KerbalSimpit.Serial
                 }
                 catch (Exception e)
                 {
-                    SimpitPlugin.Instance.SWLogger.LogError(String.Format("KerbalSimpit: Error opening serial port {0}: {1}", PortName, e.Message));
+                    SimpitPlugin.Instance.SWLogger.LogError(String.Format("Error opening serial port {0}: {1}", PortName, e.Message));
 
                     // If the port was not connected to, set connected status to false
                     portStatus = ConnectionStatus.ERROR;
@@ -339,7 +340,7 @@ namespace KerbalSimpit.Serial
 
             if(buf.Length > MaxPayloadSize)
             {
-                SimpitPlugin.Instance.SWLogger.LogWarning("Simpit, packet of type " + Type + " too big. Truncating it");
+                SimpitPlugin.Instance.SWLogger.LogWarning("packet of type " + Type + " too big. Truncating it");
                 buf = buf.Take(MaxPayloadSize).ToArray();
             }
 
@@ -358,7 +359,7 @@ namespace KerbalSimpit.Serial
         {
             lock (queueLock)
             {
-                SimpitPlugin.Instance.SWLogger.LogInfo("Simpit : I'm removing " + packetQueue.Count() + " messages from the queue.");
+                SimpitPlugin.Instance.SWLogger.LogInfo("I'm removing " + packetQueue.Count() + " messages from the queue.");
                 packetQueue.Clear();
             }
         }
@@ -422,12 +423,12 @@ namespace KerbalSimpit.Serial
                     }
                     catch (System.IO.IOException exc)
                     {
-                        SimpitPlugin.Instance.SWLogger.LogError(String.Format("KerbalSimpit: IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
+                        SimpitPlugin.Instance.SWLogger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                         handleError();
                     }
                 }
             };
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("KerbalSimpit: Starting write thread for port {0}", PortName));
+            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Starting write thread for port {0}", PortName));
             while (DoSerial)
             {
                 SerialWrite();
@@ -437,7 +438,7 @@ namespace KerbalSimpit.Serial
                     portStatus = ConnectionStatus.IDLE;
                 }
             }
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("KerbalSimpit: Write thread for port {0} exiting.", PortName));
+            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Write thread for port {0} exiting.", PortName));
         }
 
         private void SerialPollingWorker()
@@ -456,17 +457,17 @@ namespace KerbalSimpit.Serial
                 }
                 catch(System.IO.IOException exc)
                 {
-                    SimpitPlugin.Instance.SWLogger.LogError(String.Format("KerbalSimpit: IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
+                    SimpitPlugin.Instance.SWLogger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                     handleError();
                 }
                 Thread.Sleep(10); // TODO: Tune this.
             };
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("KerbalSimpit: Starting poll thread for port {0}", PortName));
+            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Starting poll thread for port {0}", PortName));
             while (DoSerial)
             {
                 SerialRead();
             }
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("KerbalSimpit: Poll thread for port {0} exiting.", PortName));
+            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Poll thread for port {0} exiting.", PortName));
         }
 
         // Handle data read in worker thread. Copy data to the PayloadBuffer and when a null byte is read, decode it.
@@ -481,7 +482,7 @@ namespace KerbalSimpit.Serial
                 {
                     if(PayloadBuffer[0] == 0xAA && PayloadBuffer[1] == 0x50)
                     {
-                        SimpitPlugin.Instance.SWLogger.LogWarning("Simpit : received an ill-formatted message that look like it uses a previous Simpit version. You should update your Arduino lib");
+                        SimpitPlugin.Instance.SWLogger.LogWarning("received an ill-formatted message that look like it uses a previous Simpit version. You should update your Arduino lib");
                     }
 
                     byte packetType;
@@ -490,11 +491,11 @@ namespace KerbalSimpit.Serial
 
                     if (validMsg)
                     {
-                        //SimpitPlugin.Instance.SWLogger.LogInfo("Simpit : receveived valid packet of type " + packetType + " with payload " + payload[0]);
+                        //SimpitPlugin.Instance.SWLogger.LogInfo("receveived valid packet of type " + packetType + " with payload " + payload[0]);
                         OnPacketReceived(packetType, payload, (byte) payload.Length);
                     } else
                     {
-                        SimpitPlugin.Instance.SWLogger.LogInfo("Simpit : discarding an ill-formatted message of size " + CurrentBytesRead);
+                        SimpitPlugin.Instance.SWLogger.LogInfo("discarding an ill-formatted message of size " + CurrentBytesRead);
                         SimpitPlugin.Instance.SWLogger.LogInfo("[" + String.Join<byte>(",", PayloadBuffer.Take(CurrentBytesRead).ToArray()) + "]");
                     }
 
@@ -518,6 +519,5 @@ namespace KerbalSimpit.Serial
             SimpitPlugin.Instance.OnPacketReceived(Type, ID, buf);
             //this.k_simpit.onSerialReceivedArray[Type].Fire(ID, buf);
         }
-        */
     }
 }
