@@ -2,8 +2,6 @@
 
 using System.IO.Ports;
 using Simpit;
-using RTG;
-using UnityEngine;
 
 namespace KerbalSimpit.Serial
 {
@@ -40,7 +38,7 @@ namespace KerbalSimpit.Serial
         private Queue<byte[]> packetQueue = new Queue<byte[]>();
 
         private SerialPort Port;
-    
+
         // Packet buffer related fields. At least 32 is needed for the CAGSTATUS message.
         private const int MaxPayloadSize = 32;
         // This is *total* packet size, including all headers.
@@ -89,17 +87,32 @@ namespace KerbalSimpit.Serial
                 {
                     Port.Open();
 
-                    SerialWriteThread = new Thread(SerialWriteQueueRunner);
-                    SerialReadThread = new Thread(SerialPollingWorker);
-
                     DoSerial = true;
-
                     // If the port connected, set connected status to waiting for the handshake
                     portStatus = ConnectionStatus.WAITING_HANDSHAKE;
 
+                    //Start the threads separately, otherwise the game freezes
+                    SerialReadThread = new Thread(SerialPollingWorker);
                     SerialReadThread.Start();
+                    SimpitPlugin.Instance.SWLogger.LogDebug("Starting Read Thread");
+                    //TODO Does this while statement make the game freeze sometimes?
+                    while (!SerialReadThread.IsAlive)
+                    {
+                        SimpitPlugin.Instance.SWLogger.LogDebug(".");
+                        //Thread.Sleep(100);
+                    }
+                    SimpitPlugin.Instance.SWLogger.LogDebug("Read Thread started");
+
+                    SerialWriteThread = new Thread(SerialWriteQueueRunner);
                     SerialWriteThread.Start();
-                    while (!SerialReadThread.IsAlive || !SerialWriteThread.IsAlive);
+                    SimpitPlugin.Instance.SWLogger.LogDebug("Starting Write Thread");
+                    //TODO Does this while statement make the game freeze sometimes?;
+                    while (!SerialWriteThread.IsAlive)
+                    {
+                        SimpitPlugin.Instance.SWLogger.LogDebug(".");
+                        //Thread.Sleep(100);
+                    }
+                    SimpitPlugin.Instance.SWLogger.LogDebug("Write Thread started");
                 }
                 catch (Exception e)
                 {
@@ -118,16 +131,22 @@ namespace KerbalSimpit.Serial
 
             if (Port.IsOpen)
             {
+                SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Closing port {0}.", PortName));
                 portStatus = KSPSerialPort.ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
                 Port.Close();
             } else if(portStatus == KSPSerialPort.ConnectionStatus.ERROR)
             {
+                SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Closing port {0} after error.", PortName));
                 portStatus = KSPSerialPort.ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
                 Port.Close();
+            }
+            else
+            {
+                SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Port {0} is already closed. Don't do anything.", PortName));
             }
         }
 
@@ -393,9 +412,9 @@ namespace KerbalSimpit.Serial
 
         private void SerialWriteQueueRunner()
         {
-            Action SerialWrite = null;
-            SerialWrite = delegate {
+            Action SerialWrite  = delegate {
                 byte[] dequeued = null;
+                
                 lock(queueLock)
                 {
                     // If the queue is empty and serial is still running,
@@ -417,7 +436,7 @@ namespace KerbalSimpit.Serial
                 {
                     try
                     {
-                        //SimpitPlugin.Instance.SWLogger.LogInfo("Simpit : sending " + String.Join<byte>(",", dequeued));
+                        SimpitPlugin.Instance.SWLogger.LogInfo("Simpit : sending " + String.Join<byte>(",", dequeued));
                         Port.Write(dequeued, 0, dequeued.Length);
                         dequeued = null;
                     }
@@ -428,6 +447,7 @@ namespace KerbalSimpit.Serial
                     }
                 }
             };
+
             SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Starting write thread for port {0}", PortName));
             while (DoSerial)
             {
@@ -440,11 +460,11 @@ namespace KerbalSimpit.Serial
             }
             SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Write thread for port {0} exiting.", PortName));
         }
-
+        
         private void SerialPollingWorker()
         {
-            Action SerialRead = null;
-            SerialRead = delegate {
+            Action SerialRead = delegate 
+            {
                 try
                 {
                     int actualLength = Port.BytesToRead;
@@ -473,6 +493,8 @@ namespace KerbalSimpit.Serial
         // Handle data read in worker thread. Copy data to the PayloadBuffer and when a null byte is read, decode it.
         private void ReceivedDataEvent(byte[] ReadBuffer, int BufferLength)
         {
+            SimpitPlugin.Instance.SWLogger.LogDebug("Received " + BufferLength + " bytes.");
+
             for (int x=0; x<BufferLength; x++)
             {
                 PayloadBuffer[CurrentBytesRead] = ReadBuffer[x];
@@ -491,7 +513,7 @@ namespace KerbalSimpit.Serial
 
                     if (validMsg)
                     {
-                        //SimpitPlugin.Instance.SWLogger.LogInfo("receveived valid packet of type " + packetType + " with payload " + payload[0]);
+                        SimpitPlugin.Instance.SWLogger.LogDebug("receveived valid packet of type " + packetType + " with payload " + payload[0]);
                         OnPacketReceived(packetType, payload, (byte) payload.Length);
                     } else
                     {
@@ -516,8 +538,7 @@ namespace KerbalSimpit.Serial
                 portStatus = ConnectionStatus.CONNECTED;
             }
 
-            SimpitPlugin.Instance.OnPacketReceived(Type, ID, buf);
-            //this.k_simpit.onSerialReceivedArray[Type].Fire(ID, buf);
+            SimpitPlugin.Instance.onSerialReceivedArray[Type].Fire(ID, buf);
         }
     }
 }
