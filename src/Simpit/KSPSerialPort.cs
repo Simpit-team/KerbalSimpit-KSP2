@@ -79,6 +79,17 @@ namespace KerbalSimpit.Serial
             SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Using serial polling thread for {0}", pn));
         }
 
+        public void ChangePort(string newPortName, int newBaudRate)
+        {
+            if (Port.IsOpen)
+            {
+                SimpitPlugin.Instance.SWLogger.LogWarning(String.Format("Can't change port because port {0} is already open", Port.PortName));
+                return;
+            }
+            Port.PortName = newPortName;
+            Port.BaudRate = newBaudRate;
+        }
+
         // Open the serial port
         public bool open() {
             if (!Port.IsOpen)
@@ -436,7 +447,7 @@ namespace KerbalSimpit.Serial
                 {
                     try
                     {
-                        SimpitPlugin.Instance.SWLogger.LogInfo("Simpit : sending " + String.Join<byte>(",", dequeued));
+                        SimpitPlugin.Instance.SWLogger.LogInfo("Sending " + String.Join<byte>(",", dequeued));
                         Port.Write(dequeued, 0, dequeued.Length);
                         dequeued = null;
                     }
@@ -493,7 +504,7 @@ namespace KerbalSimpit.Serial
         // Handle data read in worker thread. Copy data to the PayloadBuffer and when a null byte is read, decode it.
         private void ReceivedDataEvent(byte[] ReadBuffer, int BufferLength)
         {
-            SimpitPlugin.Instance.SWLogger.LogDebug("Received " + BufferLength + " bytes.");
+            //SimpitPlugin.Instance.SWLogger.LogDebug("Received " + BufferLength + " bytes.");
 
             for (int x=0; x<BufferLength; x++)
             {
@@ -513,7 +524,7 @@ namespace KerbalSimpit.Serial
 
                     if (validMsg)
                     {
-                        SimpitPlugin.Instance.SWLogger.LogDebug("receveived valid packet of type " + packetType + " with payload " + payload[0]);
+                        //SimpitPlugin.Instance.SWLogger.LogDebug("receveived valid packet of type " + packetType + " with payload " + payload[0]);
                         OnPacketReceived(packetType, payload, (byte) payload.Length);
                     } else
                     {
