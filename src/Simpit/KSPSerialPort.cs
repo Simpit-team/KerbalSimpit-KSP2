@@ -86,6 +86,8 @@ namespace KerbalSimpit.Serial
                 SimpitPlugin.Instance.SWLogger.LogWarning(String.Format("Can't change port because port {0} is already open", Port.PortName));
                 return;
             }
+            PortName = newPortName;
+            BaudRate = newBaudRate;
             Port.PortName = newPortName;
             Port.BaudRate = newBaudRate;
         }
@@ -105,25 +107,25 @@ namespace KerbalSimpit.Serial
                     //Start the threads separately, otherwise the game freezes
                     SerialReadThread = new Thread(SerialPollingWorker);
                     SerialReadThread.Start();
-                    SimpitPlugin.Instance.SWLogger.LogDebug("Starting Read Thread");
+                    //SimpitPlugin.Instance.SWLogger.LogDebug("Starting Read Thread");
                     //TODO Does this while statement make the game freeze sometimes?
                     while (!SerialReadThread.IsAlive)
                     {
-                        SimpitPlugin.Instance.SWLogger.LogDebug(".");
+                        //SimpitPlugin.Instance.SWLogger.LogDebug(".");
                         //Thread.Sleep(100);
                     }
-                    SimpitPlugin.Instance.SWLogger.LogDebug("Read Thread started");
+                    //SimpitPlugin.Instance.SWLogger.LogDebug("Read Thread started");
 
                     SerialWriteThread = new Thread(SerialWriteQueueRunner);
                     SerialWriteThread.Start();
-                    SimpitPlugin.Instance.SWLogger.LogDebug("Starting Write Thread");
+                    //SimpitPlugin.Instance.SWLogger.LogDebug("Starting Write Thread");
                     //TODO Does this while statement make the game freeze sometimes?;
                     while (!SerialWriteThread.IsAlive)
                     {
-                        SimpitPlugin.Instance.SWLogger.LogDebug(".");
+                        //SimpitPlugin.Instance.SWLogger.LogDebug(".");
                         //Thread.Sleep(100);
                     }
-                    SimpitPlugin.Instance.SWLogger.LogDebug("Write Thread started");
+                    //SimpitPlugin.Instance.SWLogger.LogDebug("Write Thread started");
                 }
                 catch (Exception e)
                 {
@@ -453,13 +455,13 @@ namespace KerbalSimpit.Serial
                     }
                     catch (System.IO.IOException exc)
                     {
-                        SimpitPlugin.Instance.SWLogger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
+                        //SimpitPlugin.Instance.SWLogger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                         handleError();
                     }
                 }
             };
 
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Starting write thread for port {0}", PortName));
+            //SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Starting write thread for port {0}", PortName));
             while (DoSerial)
             {
                 SerialWrite();
@@ -469,7 +471,7 @@ namespace KerbalSimpit.Serial
                     portStatus = ConnectionStatus.IDLE;
                 }
             }
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Write thread for port {0} exiting.", PortName));
+            //SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Write thread for port {0} exiting.", PortName));
         }
         
         private void SerialPollingWorker()
@@ -488,17 +490,17 @@ namespace KerbalSimpit.Serial
                 }
                 catch(System.IO.IOException exc)
                 {
-                    SimpitPlugin.Instance.SWLogger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
+                    //SimpitPlugin.Instance.SWLogger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                     handleError();
                 }
                 Thread.Sleep(10); // TODO: Tune this.
             };
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Starting poll thread for port {0}", PortName));
+            //SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Starting poll thread for port {0}", PortName));
             while (DoSerial)
             {
                 SerialRead();
             }
-            SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Poll thread for port {0} exiting.", PortName));
+            //SimpitPlugin.Instance.SWLogger.LogInfo(String.Format("Poll thread for port {0} exiting.", PortName));
         }
 
         // Handle data read in worker thread. Copy data to the PayloadBuffer and when a null byte is read, decode it.
@@ -515,7 +517,7 @@ namespace KerbalSimpit.Serial
                 {
                     if(PayloadBuffer[0] == 0xAA && PayloadBuffer[1] == 0x50)
                     {
-                        SimpitPlugin.Instance.SWLogger.LogWarning("received an ill-formatted message that look like it uses a previous Simpit version. You should update your Arduino lib");
+                        //SimpitPlugin.Instance.SWLogger.LogWarning("received an ill-formatted message that look like it uses a previous Simpit version. You should update your Arduino lib");
                     }
 
                     byte packetType;
@@ -528,8 +530,8 @@ namespace KerbalSimpit.Serial
                         OnPacketReceived(packetType, payload, (byte) payload.Length);
                     } else
                     {
-                        SimpitPlugin.Instance.SWLogger.LogInfo("discarding an ill-formatted message of size " + CurrentBytesRead);
-                        SimpitPlugin.Instance.SWLogger.LogInfo("[" + String.Join<byte>(",", PayloadBuffer.Take(CurrentBytesRead).ToArray()) + "]");
+                        //SimpitPlugin.Instance.SWLogger.LogInfo("discarding an ill-formatted message of size " + CurrentBytesRead);
+                        //SimpitPlugin.Instance.SWLogger.LogInfo("[" + String.Join<byte>(",", PayloadBuffer.Take(CurrentBytesRead).ToArray()) + "]");
                     }
 
                     CurrentBytesRead = 0;

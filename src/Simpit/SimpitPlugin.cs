@@ -42,7 +42,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     private const string ToolbarOabButtonID = "BTN-SimpitOAB";
     private const string ToolbarKscButtonID = "BTN-SimpitKSC";
 
-    bool config_verbose;
+    public bool config_verbose;
     int config_refreshRate;
 
     //Serial Port
@@ -357,6 +357,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         providers = new GameObject();
         providers.AddComponent<KerbalSimpitAxisController>();
+        providers.AddComponent<KerbalSimpitActionProvider>();
     }
 
     private void StartEventDispatch()
