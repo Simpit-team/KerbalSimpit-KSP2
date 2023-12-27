@@ -33,22 +33,15 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     // Singleton instance of the plugin class
     [PublicAPI] public static SimpitPlugin Instance { get; set; }
 
-    // UI window state
-    private bool _isWindowOpen;
-    private Rect _windowRect;
-
-    // AppBar button IDs
-    private const string ToolbarFlightButtonID = "BTN-SimpitFlight";
-    private const string ToolbarOabButtonID = "BTN-SimpitOAB";
-    private const string ToolbarKscButtonID = "BTN-SimpitKSC";
+    SimpitGui gui = new SimpitGui();
 
     public bool config_verbose;
     int config_refreshRate;
 
     //Serial Port
-    string config_SerialPortName;
-    int config_SerialPortBaudRate;
-    KSPSerialPort port;
+    public string config_SerialPortName;
+    public int config_SerialPortBaudRate;
+    public KSPSerialPort port;
 
     //Serial Data Management
     //TODO Why are the EventData now called EventDataObsolete?!?
@@ -100,57 +93,18 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         Logger.LogInfo($"Using Serial Port \"{config_SerialPortName}\" with Baud Rate \"{config_SerialPortBaudRate}\"");
 
         //Initialize everything needed for Serial
-        initSerial();
+        InitSerial();
 
         //Initialize everything needed for the Providers
-        initProviders();
+        InitProviders();
 
-        // Register Flight AppBar button
-        Appbar.RegisterAppButton(
-            ModName,
-            ToolbarFlightButtonID,
-            AssetManager.GetAsset<Texture2D>($"{ModGuid}/images/icon.png"),
-            isOpen =>
-            {
-                ReadConfig();
-                if(port.PortName != config_SerialPortName || port.BaudRate != config_SerialPortBaudRate) port.ChangePort(config_SerialPortName, config_SerialPortBaudRate);
-                _isWindowOpen = isOpen;
-                GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(isOpen);
-            }
-        );
-
-        // Register OAB AppBar Button
-        Appbar.RegisterOABAppButton(
-            ModName,
-            ToolbarOabButtonID,
-            AssetManager.GetAsset<Texture2D>($"{ModGuid}/images/icon.png"),
-            isOpen =>
-            {
-                ReadConfig();
-                if (port.PortName != config_SerialPortName || port.BaudRate != config_SerialPortBaudRate) port.ChangePort(config_SerialPortName, config_SerialPortBaudRate);
-                _isWindowOpen = isOpen;
-                GameObject.Find(ToolbarOabButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(isOpen);
-            }
-        );
-
-        // Register KSC AppBar Button
-        Appbar.RegisterKSCAppButton(
-            ModName,
-            ToolbarKscButtonID,
-            AssetManager.GetAsset<Texture2D>($"{ModGuid}/images/icon.png"),
-            () =>
-            {
-                ReadConfig();
-                if (port.PortName != config_SerialPortName || port.BaudRate != config_SerialPortBaudRate) port.ChangePort(config_SerialPortName, config_SerialPortBaudRate);
-                _isWindowOpen = !_isWindowOpen;
-            }
-        );
+        gui.InitGui();
         
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(SimpitPlugin).Assembly);
     }
 
-    void ReadConfig()
+    public void ReadConfig()
     {
         // Fetch configuration values or create a default one if it does not exist
         const string defaultComPort = "COMxx";
@@ -168,62 +122,17 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         const int defaultRefreshRate = 125;
         var refreshRateValue = Config.Bind<int>("Settings section", "Refresh Rate", defaultRefreshRate, "Refresh rate in milliseconds. E.g. 125");
         config_refreshRate = refreshRateValue.Value;
-    }
 
-    /// <summary>
-    /// Draws a simple UI window when <code>this._isWindowOpen</code> is set to <code>true</code>.
-    /// </summary>
-    private void OnGUI()
-    {
-        // Set the UI
-        GUI.skin = Skins.ConsoleSkin;
-
-        if (_isWindowOpen)
-        {
-            _windowRect = GUILayout.Window(
-                GUIUtility.GetControlID(FocusType.Passive),
-                _windowRect,
-                FillWindow,
-                "Simpit",
-                GUILayout.Height(200),
-                GUILayout.Width(250)
-            );
+        if(port != null) 
+        { 
+            if (port.PortName != config_SerialPortName || port.BaudRate != config_SerialPortBaudRate) port.ChangePort(config_SerialPortName, config_SerialPortBaudRate); 
         }
     }
-
-    /// <summary>
-    /// Defines the content of the UI window drawn in the <code>OnGui</code> method.
-    /// </summary>
-    /// <param name="windowID"></param>
-    private static void FillWindow(int windowID)
+    private void OnGUI()
     {
-		// Add a Simpit icon to the upper left corner of the GUI
-        GUI.Label(new Rect(9, 2, 29, 29), AssetManager.GetAsset<Texture2D>($"{ModGuid}/images/icon.png"));
-		//Add a X to close the window to the upper right corner of the GUI
-		if ( GUI.Button(new Rect(Instance._windowRect.width - 4 - 27, 4, 27, 27), AssetManager.GetAsset<Texture2D>($"{ModGuid}/images/cross.png")) )
-            Instance.CloseWindow();
-
-        //Add a text to the GUI
-        GUILayout.Label(
-            $"Serial Port: {Instance.config_SerialPortName} \n" +
-            $"Baud Rate: {Instance.config_SerialPortBaudRate} \n" +
-            $"Status: {Instance.port.portStatus}");
-
-        //Add Buttons
-        if (GUI.Button(new Rect(10, 140, 100, 50), "Open")) Instance.OpenPort();
-        if (GUI.Button(new Rect(Instance._windowRect.width - 10 - 100, 140, 100, 50), "Close")) Instance.ClosePort();
-		
-		
-        GUI.DragWindow(new Rect(0, 0, 10000, 500));
+        gui.OnGui();
     }
-	
-	private void CloseWindow()
-    {
-		GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
-		GameObject.Find(ToolbarOabButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
-		GameObject.Find(ToolbarKscButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
-        _isWindowOpen = false;
-    }
+
     public void OpenPort()
     {
         if (port.portStatus != KSPSerialPort.ConnectionStatus.CLOSED && port.portStatus != KSPSerialPort.ConnectionStatus.ERROR)
@@ -284,57 +193,15 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             StartEventDispatch();
     }
 
-    private void ClosePort()
+    public void ClosePort()
     {
-        if (port == null)  return;
+        if (port == null) return;
 
         port.close();
     }
 
-    /*
-    private void MyButtonPress()
-    {
-        Logger.LogInfo("MyButtonPress");
-        // Try to get the currently active vessel, set its throttle to 100% and toggle on the landing gear
-        try
-        {
-            var currentVessel = Vehicle.ActiveVesselVehicle;
-            if (currentVessel != null)
-            {
-                currentVessel.SetMainThrottle(1.0f);
-                currentVessel.SetGearState(true);
-            }
-        }
-        catch (Exception) { }
-
-        GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
-        {
-            Tier = NotificationTier.Passive,
-            Primary = new NotificationLineItemData { LocKey = "You successfully pressed a Simpit Button" }
-        });
-    }
-
-    private void MyButtonPress2()
-    {
-        Logger.LogInfo("MyButtonPress2");
-        // Try to get the currently active vessel, set its throttle to 0% and toggle off the landing gear
-        try
-        {
-            var currentVessel = Vehicle.ActiveVesselVehicle;
-            if (currentVessel != null)
-            {
-                currentVessel.SetMainThrottle(0.0f);
-                currentVessel.SetGearState(false);
-            }
-        }
-        catch (Exception) { }
-    }
-    */
-
-
-
-    // Method that inits the ports. Will only be called once to initialize them when starting the mod. It will also open them.
-    private void initSerial()
+    // Method that inits the ports. Will only be called once to initialize them when starting the mod.
+    private void InitSerial()
     {
         //Create the serial port
         port = new KSPSerialPort(config_SerialPortName, config_SerialPortBaudRate);
@@ -353,7 +220,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         this.onSerialReceivedArray[InboundPackets.RequestMessage].Add(this.requestMessageCallback);
     }
 
-    private void initProviders()
+    private void InitProviders()
     {
         providers = new GameObject();
         providers.AddComponent<KerbalSimpitAxisController>();
