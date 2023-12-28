@@ -15,6 +15,7 @@ using KerbalSimpit.Serial;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Simpit.Providers;
+using SpaceWarp.API.Logging;
 //using System.ComponentModel.Primitives;
 
 namespace Simpit;
@@ -32,7 +33,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
     // Singleton instance of the plugin class
     [PublicAPI] public static SimpitPlugin Instance { get; set; }
-
+    internal new SpaceWarp.API.Logging.ILogger Logger = new UnityLogSource(ModName);
     SimpitGui gui = new SimpitGui();
 
     public bool config_verbose;
@@ -115,7 +116,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         var baudRateValue = Config.Bind<int>("Settings section", "Baud Rate", defaultBaudRate, "Which speed the Serial Port uses. E.g. 115200");
         config_SerialPortBaudRate = baudRateValue.Value;
 
-        const bool defaultVerbose = true;
+        const bool defaultVerbose = false;
         var verboseValue = Config.Bind<bool>("Settings section", "Verbose Mode", defaultVerbose, "Should verbose logs be generated");
         config_verbose = verboseValue.Value;
 

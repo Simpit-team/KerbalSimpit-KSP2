@@ -126,50 +126,43 @@ namespace Simpit.Providers
 
             if ((groups & ActionGroupBits.StageBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Activating stage");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating stage");
                 currentVessel.SetStage(true);
             }
             if ((groups & ActionGroupBits.GearBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Activating gear");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating gear");
                 //currentVessel.SetGroup(KSPActionGroup.Gear, true); //This sets the Gear state, but it can't be read. Probably a KSP2 bug. Use VesselComponent.SetActionGroup() instead
                 simVessel.SetActionGroup(KSPActionGroup.Gear, true);
             }
             if ((groups & ActionGroupBits.LightBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Activating light");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating light");
                 simVessel.SetActionGroup(KSPActionGroup.Lights, true);
             }
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Activating RCS");
-                simVessel.SetActionGroup(KSPActionGroup.RCS, true);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating RCS");
+                //simVessel.SetActionGroup(KSPActionGroup.RCS, true);
+                simVessel.SetRCSEnabled(true);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Activating SAS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating SAS");
                 simVessel.SetAutopilotEnableDisable(true);
                 //simVessel.SetActionGroup(KSPActionGroup.SAS, true);
-
-                SimpitPlugin.Instance.SWLogger.LogDebug("SAS enabled: " +
-                    simVessel.Autopilot.GetStatus().IsEnabled + " " +
-                    simVessel.AutopilotStatus.IsEnabled + " " +
-                    simVessel.GetActionGroupState(KSPActionGroup.SAS) + " " +
-                    currentVessel.GetGroup(KSPActionGroup.SAS));
             }
-            /*
             if ((groups & ActionGroupBits.BrakesBit) != 0)
             {
                 //Wheel brakes only gets set in VesselVehicle.SetGroup and not in VesselComponent like all the other action groups
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Activating brakes");
-                FlightGlobals.ActiveVessel.ActionGroups.SetGroup(KSPActionGroup.Brakes, true);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating brakes");
+                currentVessel.SetGroup(KSPActionGroup.Brakes, true);
             }
             if ((groups & ActionGroupBits.AbortBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Activating abort");
-                FlightGlobals.ActiveVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating abort");
+                simVessel.SetActionGroup(KSPActionGroup.Abort, true);
             }
-            */
         }
 
         private void deactivateGroups(byte groups)
@@ -186,49 +179,47 @@ namespace Simpit.Providers
 
             if ((groups & ActionGroupBits.StageBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Deactivating stage");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating stage");
                 currentVessel.SetStage(false);
             }
             if ((groups & ActionGroupBits.GearBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Deactivating gear");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating gear");
                 //currentVessel.SetGroup(KSPActionGroup.Gear, false);
                 simVessel.SetActionGroup(KSPActionGroup.Gear, false);
             }
             if ((groups & ActionGroupBits.LightBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Deactivating light");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating light");
                 simVessel.SetActionGroup(KSPActionGroup.Lights, false);
             }
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Deactivating RCS");
-                simVessel.SetActionGroup(KSPActionGroup.RCS, false);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating RCS");
+                //simVessel.SetActionGroup(KSPActionGroup.RCS, false);
+                simVessel.SetRCSEnabled(false);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Deactivating SAS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating SAS");
                 simVessel.SetAutopilotEnableDisable(false);
                 //simVessel.SetActionGroup(KSPActionGroup.SAS, false);
             }
-            /*
             if ((groups & ActionGroupBits.BrakesBit) != 0)
             {
                 //Wheel brakes only gets set in VesselVehicle.SetGroup and not in VesselComponent like all the other action groups
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Deactivating brakes");
-                FlightGlobals.ActiveVessel.ActionGroups.SetGroup(KSPActionGroup.Brakes, false);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating brakes");
+                currentVessel.SetGroup(KSPActionGroup.Brakes, false);
             }
             if ((groups & ActionGroupBits.AbortBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Deactivating abort");
-                FlightGlobals.ActiveVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, false);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating abort");
+                simVessel.SetActionGroup(KSPActionGroup.Abort, false);
             }
-            */
         }
 
         private void toggleGroups(byte groups)
         {
-
             VesselVehicle currentVessel = null;
             VesselComponent simVessel = null;
             try
@@ -241,52 +232,57 @@ namespace Simpit.Providers
 
             if ((groups & ActionGroupBits.StageBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Toggling (activating) stage");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling (activating) stage");
                 currentVessel.SetStage(true);
             }
             if ((groups & ActionGroupBits.GearBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Toggling gear");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling gear");
                 simVessel.TriggerActionGroup(KSPActionGroup.Gear);
                 //currentVessel.TriggerGroup(KSPActionGroup.Gear);
             }
             if ((groups & ActionGroupBits.LightBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Toggling light");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling light");
                 simVessel.TriggerActionGroup(KSPActionGroup.Lights);
             }
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Toggling RCS");
-                simVessel.TriggerActionGroup(KSPActionGroup.RCS);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling RCS");
+                //simVessel.SetActionGroup(KSPActionGroup.RCS, simVessel.GetActionGroupState(KSPActionGroup.RCS) == KSPActionGroupState.False);
+                //simVessel.TriggerActionGroup(KSPActionGroup.RCS);
+                simVessel.SetRCSEnabled(!simVessel.IsRCSEnabled);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Toggling SAS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling SAS");
                 simVessel.SetAutopilotEnableDisable(!simVessel.AutopilotStatus.IsEnabled);
                 //simVessel.TriggerActionGroup(KSPActionGroup.SAS);
             }
-            /*
             if ((groups & ActionGroupBits.BrakesBit) != 0)
             {
                 //Wheel brakes only gets set in VesselVehicle.SetGroup and not in VesselComponent like all the other action groups
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Toggling brakes");
-                FlightGlobals.ActiveVessel.ActionGroups.ToggleGroup(KSPActionGroup.Brakes);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling brakes");
+                currentVessel.TriggerGroup(KSPActionGroup.Brakes);
             }
             if ((groups & ActionGroupBits.AbortBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.SWLogger.LogInfo("Toggling abort");
-                FlightGlobals.ActiveVessel.ActionGroups.ToggleGroup(KSPActionGroup.Abort);
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling abort");
+                simVessel.TriggerActionGroup(KSPActionGroup.Abort);
             }
-            */
         }
 
         private byte getGroups()
         {
+            VesselVehicle currentVessel = null;
             VesselComponent simVessel = null;
-            try { simVessel = Vehicle.ActiveSimVessel; }
+            try
+            {
+                currentVessel = Vehicle.ActiveVesselVehicle; 
+                simVessel = Vehicle.ActiveSimVessel; 
+            }
             catch { return 0; }
-            if (simVessel == null) return 0;
+            if (currentVessel == null || simVessel == null) return 0;
 
             byte groups = 0;
             /*
@@ -305,7 +301,8 @@ namespace Simpit.Providers
             {
                 groups = (byte)(groups | ActionGroupBits.LightBit);
             }
-            if (simVessel.GetActionGroupState(KSPActionGroup.RCS) == KSPActionGroupState.True)
+            //if (simVessel.GetActionGroupState(KSPActionGroup.RCS) == KSPActionGroupState.True)
+            if (simVessel.IsRCSEnabled)
             {
                 groups = (byte)(groups | ActionGroupBits.RCSBit);
             }
@@ -314,16 +311,14 @@ namespace Simpit.Providers
             {
                 groups = (byte)(groups | ActionGroupBits.SASBit);
             }
-            /*
-            if (FlightGlobals.ActiveVessel.ActionGroups[KSPActionGroup.Brakes])
+            if (currentVessel.GetGroup(KSPActionGroup.Brakes))
             {
                 groups = (byte)(groups | ActionGroupBits.BrakesBit);
             }
-            if (FlightGlobals.ActiveVessel.ActionGroups[KSPActionGroup.Abort])
+            if (simVessel.GetActionGroupState(KSPActionGroup.Abort) == KSPActionGroupState.True)
             {
                 groups = (byte)(groups | ActionGroupBits.AbortBit);
             }
-            */
             return groups;
         }
     }

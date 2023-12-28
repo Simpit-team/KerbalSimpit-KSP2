@@ -242,7 +242,7 @@ namespace Simpit.Providers
         public void throttleCallback(byte ID, object Data)
         {
             myThrottle = BitConverter.ToInt16((byte[])Data, 0);
-            SimpitPlugin.Instance.SWLogger.LogDebug("<<< THROTTLE_MSG");
+            SimpitPlugin.Instance.Logger.LogDebug("<<< THROTTLE_MSG");
         }
 
         /*
