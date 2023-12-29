@@ -18,6 +18,9 @@ using Simpit.Providers;
 using SpaceWarp.API.Logging;
 //using System.ComponentModel.Primitives;
 
+//TODO Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
+//TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
+
 namespace Simpit;
 
 public delegate void ToDeviceCallback();

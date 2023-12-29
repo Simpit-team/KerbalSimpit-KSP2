@@ -131,6 +131,7 @@
         public static byte SASBit = 16;
         public static byte BrakesBit = 32;
         public static byte AbortBit = 64;
+        public static byte SolarPanelsBit = 128;
     }
 
     public static class WarpControlValues
