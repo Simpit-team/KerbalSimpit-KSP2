@@ -1,14 +1,8 @@
 using BepInEx;
 using HarmonyLib;
 using JetBrains.Annotations;
-using KSP.UI.Binding;
 using SpaceWarp;
-using SpaceWarp.API.Assets;
 using SpaceWarp.API.Mods;
-using SpaceWarp.API.Game;
-using SpaceWarp.API.Game.Extensions;
-using SpaceWarp.API.UI;
-using SpaceWarp.API.UI.Appbar;
 using UnityEngine;
 using KSP.Game;
 using KerbalSimpit.Serial;
@@ -16,10 +10,15 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Simpit.Providers;
 using SpaceWarp.API.Logging;
-//using System.ComponentModel.Primitives;
 
 //TODO Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
+//TODO Add Wheel control
+//TODO Add the missing Outbound messages in AxisControl.cs
+//TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
+//TODO Replace all Debug.Log with SimpitPlugin.Instance.Logger.LogInfo and remove the "Simpit : " in front of it
+//TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly. They use the deprecated GameEvents class
+
 
 namespace Simpit;
 
@@ -227,6 +226,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     private void InitProviders()
     {
         providers = new GameObject();
+        providers.AddComponent<KerbalSimpitEchoProvider>();
         providers.AddComponent<KerbalSimpitAxisController>();
         providers.AddComponent<KerbalSimpitActionProvider>();
     }

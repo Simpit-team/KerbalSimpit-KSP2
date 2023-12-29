@@ -287,9 +287,14 @@ namespace Simpit.Providers
         public void AutopilotUpdater()//KSP1 FlightCtrlState fcs)
         {
             VesselVehicle currentVessel = null;
-            try { currentVessel = Vehicle.ActiveVesselVehicle; }
+            VesselComponent simVessel = null;
+            try 
+            { 
+                currentVessel = Vehicle.ActiveVesselVehicle; 
+                simVessel = Vehicle.ActiveSimVessel; 
+            }
             catch { }
-            if (currentVessel == null) return;
+            if (currentVessel == null || simVessel == null) return;
             FlightCtrlStateIncremental fcsi = new FlightCtrlStateIncremental();
 
             if (myRotation.pitch != 0)
@@ -370,6 +375,7 @@ namespace Simpit.Providers
             // Store the last flight command to send them in the dedicated channels
             //TODO KSP1 lastFlightCtrlState.CopyFrom(fcs);
             currentVessel.AtomicSet(fcsi);
+            //simVessel.ApplyFlightCtrlState(fcsi);
         }
 
         public void SASInfoProvider()
