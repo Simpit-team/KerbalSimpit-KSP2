@@ -233,6 +233,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<KerbalSimpitActionProvider>();
         providers.AddComponent<KerbalSimpitTelemetryProvider>();
         providers.AddComponent<KerbalSimpitWarpControl>();
+        providers.AddComponent<KerbalSimpitNavBallProvider>();
     }
 
     private void StartEventDispatch()
