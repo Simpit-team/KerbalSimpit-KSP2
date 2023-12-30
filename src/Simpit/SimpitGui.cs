@@ -22,6 +22,9 @@ namespace Simpit
         private const string ToolbarOabButtonID = "BTN-SimpitOAB";
         private const string ToolbarKscButtonID = "BTN-SimpitKSC";
 
+        static string debugText = "Show stuff here with SimpitGui.SetDebugText()";
+        static int debugTextChangeCounter = 0;
+
         public void InitGui()
         {
             // Register Flight AppBar button
@@ -79,7 +82,7 @@ namespace Simpit
                     _windowRect,
                     FillWindow,
                     "Simpit",
-                    GUILayout.Height(200),
+                    GUILayout.Height(250),
                     GUILayout.Width(250)
                 );
             }
@@ -102,10 +105,13 @@ namespace Simpit
                 $"Serial Port: {SimpitPlugin.Instance.config_SerialPortName} \n" +
                 $"Baud Rate: {SimpitPlugin.Instance.config_SerialPortBaudRate} \n" +
                 $"Status: {SimpitPlugin.Instance.port.portStatus}");
+            
+            //Add the debug text to the GUI
+            GUILayout.Label(debugText);
 
             //Add Buttons
-            if (GUI.Button(new Rect(10, 140, 100, 50), "Open")) OnButtonOpenPort();
-            if (GUI.Button(new Rect(_windowRect.width - 10 - 100, 140, 100, 50), "Close")) OnButtonClosePort();
+            if (GUI.Button(new Rect(10, 190, 100, 50), "Open")) OnButtonOpenPort();
+            if (GUI.Button(new Rect(_windowRect.width - 10 - 100, 190, 100, 50), "Close")) OnButtonClosePort();
 
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -127,6 +133,13 @@ namespace Simpit
         static void OnButtonOpenPort()
         {
             SimpitPlugin.Instance.OpenPort();
+        }
+
+        public static void SetDebugText(string text)
+        {
+            debugTextChangeCounter++;
+            debugTextChangeCounter %= 100;
+            debugText = String.Format("{0:000} {1}", debugTextChangeCounter, text);
         }
     }
 }

@@ -20,8 +20,7 @@ using SpaceWarp.API.Logging;
 //TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
 //TODO Replace all Debug.Log with SimpitPlugin.Instance.Logger.LogInfo and remove the "Simpit : " in front of it
 //TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly. They use the deprecated GameEvents class
-//TODO Telemetry.cs : AirspeedProvider() is missing indicated air speed
-//TODO Telemetry.cs : WorldVecToNavHeading(), RotationProvider(), TempLimitProvider()
+//TODO Telemetry.cs : Please check/test especially airspeed, maneuverData, rotationData 
 
 namespace Simpit;
 

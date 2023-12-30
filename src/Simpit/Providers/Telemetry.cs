@@ -1,5 +1,8 @@
+using KSP.Game;
+using KSP.Messages.PropertyWatchers;
 using KSP.Sim.DeltaV;
 using KSP.Sim.impl;
+using KSP.Sim.Maneuver;
 using SpaceWarp.API.Game;
 using System;
 using System.Runtime.InteropServices;
@@ -220,14 +223,13 @@ namespace Simpit.Providers
             if (velocityChannel != null) velocityChannel.Fire(OutboundPackets.Velocities, myVelocity);
         }
 
-        /*
         // Convert a direction given in world space v into a heading and a pitch, relative to the vessel passed as a paramater
-        public static void WorldVecToNavHeading(Vessel activeVessel, Vector3d v, out float heading, out float pitch)
+        public static void WorldVecToNavHeading(VesselComponent activeVessel, Vector3d v, out float heading, out float pitch)
         {
-            Vector3d CoM, north, up, east;
-            CoM = activeVessel.CoM;
-            up = (CoM - activeVessel.mainBody.position).normalized;
-            north = Vector3d.Exclude(up, (activeVessel.mainBody.position + activeVessel.mainBody.transform.up * (float)activeVessel.mainBody.Radius) - CoM).normalized;
+            KSP.Sim.Position CoM = activeVessel.CenterOfMass;
+            Vector3d north, up, east;
+            up = (CoM - activeVessel.mainBody.Position).vector.normalized;
+            north = Vector3d.Exclude(up, ((activeVessel.mainBody.Position + activeVessel.mainBody.transform.up * (float)activeVessel.mainBody.radius) - CoM).vector).normalized;
             east = Vector3d.Cross(up, north);
 
             // Code from KSPIO to do angle conversions : https://github.com/zitron-git/KSPSerialIO/blob/062d97e892077ea14737f5e79268c0c4d067f5b6/KSPSerialIO/KSPIO.cs#L1301-L1313
@@ -240,34 +242,30 @@ namespace Simpit.Providers
             else
                 heading = -NAngle + 360;
         }
-        */
-
+        
         public void RotationProvider()
         {
-            /*
             VesselComponent simVessel = null;
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
             if (simVessel == null) return;
 
 
             // Code from KSPIO to compute angles and velocities https://github.com/zitron-git/KSPSerialIO/blob/062d97e892077ea14737f5e79268c0c4d067f5b6/KSPSerialIO/KSPIO.cs#L929-L971
-            Vector3d CoM, north, up, east;
-            CoM = activeVessel.CoM;
-            up = (CoM - activeVessel.mainBody.position).normalized;
-            north = Vector3d.Exclude(up, (activeVessel.mainBody.position + activeVessel.mainBody.transform.up * (float)activeVessel.mainBody.Radius) - CoM).normalized;
+            KSP.Sim.Position CoM = simVessel.CenterOfMass;
+            Vector3d north, up, east;
+            up = (CoM - simVessel.mainBody.Position).vector.normalized;
+            north = Vector3d.Exclude(up, ((simVessel.mainBody.Position + simVessel.mainBody.transform.up * (float)simVessel.mainBody.radius) - CoM).vector).normalized;
             east = Vector3d.Cross(up, north);
 
-            Vector3d attitude = Quaternion.Inverse(Quaternion.Euler(90, 0, 0) * Quaternion.Inverse(FlightGlobals.ActiveVessel.GetTransform().rotation) * Quaternion.LookRotation(north, up)).eulerAngles;
-
+            Vector3d attitude = Quaternion.Inverse(Quaternion.Euler(90, 0, 0) * Quaternion.Inverse(Vehicle.ActiveVesselVehicle.Rotation.localRotation) * Quaternion.LookRotation(north, up)).eulerAngles;
+            
             myRotation.roll = (float) ((attitude.z > 180) ? (attitude.z - 360.0) : attitude.z);
             myRotation.pitch = (float) ((attitude.x > 180) ? (360.0 - attitude.x) : -attitude.x);
             myRotation.heading = (float) attitude.y;
 
-            WorldVecToNavHeading(activeVessel, activeVessel.srf_velocity.normalized, out myRotation.surfaceVelocityHeading, out myRotation.surfaceVelocityPitch);
-            WorldVecToNavHeading(activeVessel, activeVessel.obt_velocity.normalized, out myRotation.orbitalVelocityHeading, out myRotation.orbitalVelocityPitch);
+            WorldVecToNavHeading(simVessel, simVessel.SurfaceVelocity.vector.normalized, out myRotation.surfaceVelocityHeading, out myRotation.surfaceVelocityPitch);
 
             if (rotationChannel != null) rotationChannel.Fire(OutboundPackets.RotationData, myRotation);
-            */
         }
 
             public void OrbitInfoProvider()
@@ -295,7 +293,8 @@ namespace Simpit.Providers
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
             if (simVessel == null) return;
 
-            myAirspeed.IAS = (float)0; //TODO add indicated air speed
+            myAirspeed.IAS = Mathf.Sqrt((2 * (float)simVessel.DynamicPressure_kPa * (10000f/9.80665f)) / (float)simVessel.mainBody.atmosphereDensityASL);
+            SimpitGui.SetDebugText("IAS " + myAirspeed.IAS+ "\n    SFS " + simVessel.SurfaceVelocity.magnitude);    
             myAirspeed.MachNumber = (float)simVessel.MachNumber;
             myAirspeed.gForces = (float)simVessel.geeForce;
             if (airspeedChannel != null) airspeedChannel.Fire(OutboundPackets.Airspeed, myAirspeed);
@@ -303,7 +302,6 @@ namespace Simpit.Providers
 
         public void TempLimitProvider()
         {
-            /*
             VesselComponent simVessel = null;
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
             if (simVessel == null) return;
@@ -311,11 +309,12 @@ namespace Simpit.Providers
             double maxTempPercentage = 0.0;
             double maxSkinTempPercentage = 0.0;
 
+            
             // Iterate on a copy ?
-            foreach (Part part in FlightGlobals.ActiveVessel.Parts)
+            foreach (PartComponent part in simVessel.SimulationObject.PartOwner.Parts)
             {
-                maxTempPercentage = Math.Max(maxTempPercentage, 100.0 * part.temperature / part.maxTemp);
-                maxSkinTempPercentage = Math.Max(maxSkinTempPercentage, 100.0 * part.skinTemperature / part.skinMaxTemp);
+                maxTempPercentage = Math.Max(maxTempPercentage, 100.0 * part.Temperature / part.MaxTemp);
+                maxSkinTempPercentage = 0; //I think there is no skin tempereature in KSP2, or is there?
             }
 
             //Prevent the byte to overflow in case of extremely hot vessel
@@ -326,7 +325,6 @@ namespace Simpit.Providers
             myTempLimitStruct.skinTempLimitPercentage = (byte)Math.Round(maxSkinTempPercentage);
 
             if (tempLimitChannel != null) tempLimitChannel.Fire(OutboundPackets.TempLimit, myTempLimitStruct);
-            */
         }
 
         //Return the DeltaVStageInfo of the first stage to consider for deltaV and burn time computation
@@ -347,13 +345,14 @@ namespace Simpit.Providers
 
             try
             {
-                if (FlightGlobals.ActiveVessel.currentStage == FlightGlobals.ActiveVessel.VesselDeltaV.OperatingStageInfo.Count)
+                if(DeltaVExtensions.CurrentStage(vesselDeltaV) == vesselDeltaV.StageInfo.Count) 
+                // KSP1: if (FlightGlobals.ActiveVessel.currentStage == FlightGlobals.ActiveVessel.VesselDeltaV.OperatingStageInfo.Count)
                 {
                     // KSP1: Rocket has not taken off, use first stage with deltaV (to avoid stage of only stabilizer)
-                    for (int i = FlightGlobals.ActiveVessel.VesselDeltaV.OperatingStageInfo.Count - 1; i >= 0; i--)
+                    for (int i = vesselDeltaV.StageInfo.Count - 1; i >= 0; i--)
                     {
-                        currentStageInfo = FlightGlobals.ActiveVessel.VesselDeltaV.GetStage(i);
-                        if (currentStageInfo.deltaVActual > 0)
+                        currentStageInfo = vesselDeltaV.GetStage(i);
+                        if (currentStageInfo.DeltaVActual > 0)
                         {
                             break;
                         }
@@ -361,7 +360,7 @@ namespace Simpit.Providers
                 }
                 else
                 {
-                    currentStageInfo = FlightGlobals.ActiveVessel.VesselDeltaV.GetStage(FlightGlobals.ActiveVessel.currentStage);
+                    currentStageInfo = vesselDeltaV.GetStage(DeltaVExtensions.CurrentStage(vesselDeltaV));
                 }
             }
             catch (NullReferenceException)
@@ -370,7 +369,6 @@ namespace Simpit.Providers
                 // KSP1: FlightGlobals.ActiveVessel.VesselDeltaV.OperatingStageInfo is not null but using it produce a
                 // KSP1: NullReferenceException in KSP code. This is probably due to the fact that the rocket is not fully initialized.
             }
-
             return currentStageInfo;
         }
 
@@ -387,32 +385,36 @@ namespace Simpit.Providers
             myManeuver.headingNextManeuver = 0.0f;
             myManeuver.pitchNextManeuver = 0.0f;
 
-            if (FlightGlobals.ActiveVessel.patchedConicSolver != null)
+            ManeuverPlanSolver mps = simVessel.Orbiter.ManeuverPlanSolver;
+            if(mps != null)
+            //KSP1 if (FlightGlobals.ActiveVessel.patchedConicSolver != null)
             {
-                if (FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes != null)
+                List<ManeuverNodeData> maneuvers = simVessel.Orbiter.SimulationObject.ManeuverPlan.GetNodes();
+                if (maneuvers != null)
+                //KSP1 if (FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes != null)
                 {
-                    System.Collections.Generic.List<ManeuverNode> maneuvers = FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes;
-
                     if(maneuvers.Count > 0)
                     {
-                        myManeuver.timeToNextManeuver = (float)(maneuvers[0].UT - Planetarium.GetUniversalTime());
-                        myManeuver.deltaVNextManeuver = (float)maneuvers[0].GetPartialDv().magnitude;
+                        double ut = GameManager.Instance.Game.SpaceSimulation.UniverseModel.UniverseTime;
+                        myManeuver.timeToNextManeuver = (float)(maneuvers[0].Time - ut);
+                        myManeuver.deltaVNextManeuver = (float)maneuvers[0].BurnRequiredDV;
 
-                        WorldVecToNavHeading(FlightGlobals.ActiveVessel, maneuvers[0].GetBurnVector(maneuvers[0].patch), out myManeuver.headingNextManeuver, out myManeuver.pitchNextManeuver);
+                        WorldVecToNavHeading(simVessel, maneuvers[0].BurnVector, out myManeuver.headingNextManeuver, out myManeuver.pitchNextManeuver);
 
                         DeltaVStageInfo currentStageInfo = getCurrentStageDeltaV();
                         if (currentStageInfo != null)
                         {
-                            //Old method, use a simple crossmultiplication to compute the estimated burn time based on the current stage only
-                            //myManeuver.durationNextManeuver = (float)(maneuvers[0].DeltaV.magnitude * currentStageInfo.stageBurnTime) / currentStageInfo.deltaVActual;
+                            //KSP1 Old method, use a simple crossmultiplication to compute the estimated burn time based on the current stage only
+                            //KSP1 myManeuver.durationNextManeuver = (float)(maneuvers[0].DeltaV.magnitude * currentStageInfo.stageBurnTime) / currentStageInfo.deltaVActual;
 
-                            // The estimation based on the startBurnIn seems to be more accurate than using the previous method of crossmultiplication
-                            myManeuver.durationNextManeuver = (float)((maneuvers[0].UT - Planetarium.GetUniversalTime() - maneuvers[0].startBurnIn) * 2);
+                            //KSP1 The estimation based on the startBurnIn seems to be more accurate than using the previous method of crossmultiplication
+                            //KSP1 myManeuver.durationNextManeuver = (float)((maneuvers[0].Time - ut - maneuvers[0].startBurnIn) * 2);
+                            myManeuver.durationNextManeuver = (float)maneuvers[0].BurnDuration;
                         }
 
-                        foreach (ManeuverNode maneuver in maneuvers)
+                        foreach (ManeuverNodeData maneuver in maneuvers)
                         {
-                            myManeuver.deltaVTotal += (float)maneuver.DeltaV.magnitude;
+                            myManeuver.deltaVTotal += (float)maneuver.BurnRequiredDV;
                         }
                     }
                 }
@@ -423,11 +425,11 @@ namespace Simpit.Providers
         public void DeltaVProvider()
         {
             DeltaVStageInfo currentStageInfo = getCurrentStageDeltaV();
-
+            
             if (currentStageInfo != null)
             {
-                myDeltaVStruct.stageDeltaV = (float)currentStageInfo.deltaVActual;
-                myDeltaVStruct.totalDeltaV = (float)FlightGlobals.ActiveVessel.VesselDeltaV.TotalDeltaVActual;
+                myDeltaVStruct.stageDeltaV = (float)currentStageInfo.DeltaVActual;
+                myDeltaVStruct.totalDeltaV = (float)Vehicle.ActiveSimVessel.VesselDeltaV.TotalDeltaVActual;
             }
             else
             {
@@ -445,10 +447,10 @@ namespace Simpit.Providers
             if (currentStageInfo != null)
             {
 
-                myDeltaVEnvStruct.stageDeltaVASL = (float)currentStageInfo.deltaVatASL;
-                myDeltaVEnvStruct.stageDeltaVVac = (float)currentStageInfo.deltaVinVac;
-                myDeltaVEnvStruct.totalDeltaVASL = (float)FlightGlobals.ActiveVessel.VesselDeltaV.TotalDeltaVASL;
-                myDeltaVEnvStruct.totalDeltaVVac = (float)FlightGlobals.ActiveVessel.VesselDeltaV.TotalDeltaVVac;
+                myDeltaVEnvStruct.stageDeltaVASL = (float)currentStageInfo.DeltaVatASL;
+                myDeltaVEnvStruct.stageDeltaVVac = (float)currentStageInfo.DeltaVinVac;
+                myDeltaVEnvStruct.totalDeltaVASL = (float)Vehicle.ActiveSimVessel.VesselDeltaV.TotalDeltaVASL;
+                myDeltaVEnvStruct.totalDeltaVVac = (float)Vehicle.ActiveSimVessel.VesselDeltaV.TotalDeltaVVac;
             }
             else
             {
@@ -467,8 +469,8 @@ namespace Simpit.Providers
 
             if (currentStageInfo != null)
             {
-                myBurnTimeStruct.stageBurnTime = (float)currentStageInfo.stageBurnTime;
-                myBurnTimeStruct.totalBurnTime = (float)FlightGlobals.ActiveVessel.VesselDeltaV.TotalBurnTime;
+                myBurnTimeStruct.stageBurnTime = (float)currentStageInfo.StageBurnTime;
+                myBurnTimeStruct.totalBurnTime = (float)Vehicle.ActiveSimVessel.VesselDeltaV.TotalBurnTime;
             }
             else
             {
