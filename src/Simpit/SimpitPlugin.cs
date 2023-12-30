@@ -21,6 +21,7 @@ using SpaceWarp.API.Logging;
 //TODO Replace all Debug.Log with SimpitPlugin.Instance.Logger.LogInfo and remove the "Simpit : " in front of it
 //TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly. They use the deprecated GameEvents class
 //TODO Telemetry.cs : Please check/test especially airspeed, maneuverData, rotationData 
+//TODO WarpControl.cs : Please check/test especially setting a specific warp level, timewarp to Ap/Pe/SOI change/Next morining
 
 namespace Simpit;
 
@@ -231,6 +232,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<KerbalSimpitAxisController>();
         providers.AddComponent<KerbalSimpitActionProvider>();
         providers.AddComponent<KerbalSimpitTelemetryProvider>();
+        providers.AddComponent<KerbalSimpitWarpControl>();
     }
 
     private void StartEventDispatch()

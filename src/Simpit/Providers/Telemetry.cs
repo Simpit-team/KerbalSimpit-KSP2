@@ -294,7 +294,6 @@ namespace Simpit.Providers
             if (simVessel == null) return;
 
             myAirspeed.IAS = Mathf.Sqrt((2 * (float)simVessel.DynamicPressure_kPa * (10000f/9.80665f)) / (float)simVessel.mainBody.atmosphereDensityASL);
-            SimpitGui.SetDebugText("IAS " + myAirspeed.IAS+ "\n    SFS " + simVessel.SurfaceVelocity.magnitude);    
             myAirspeed.MachNumber = (float)simVessel.MachNumber;
             myAirspeed.gForces = (float)simVessel.geeForce;
             if (airspeedChannel != null) airspeedChannel.Fire(OutboundPackets.Airspeed, myAirspeed);
