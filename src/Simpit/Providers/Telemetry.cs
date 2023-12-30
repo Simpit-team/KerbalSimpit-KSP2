@@ -195,8 +195,8 @@ namespace Simpit.Providers
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
             if (simVessel == null) return;
 
-            myApsides.apoapsis = (float)simVessel.Orbit.Apoapsis;
-            myApsides.periapsis = (float)simVessel.Orbit.Periapsis;
+            myApsides.apoapsis = (float)(simVessel.Orbit.Apoapsis - simVessel.mainBody.radius);
+            myApsides.periapsis = (float)(simVessel.Orbit.Periapsis - simVessel.mainBody.radius);
             if (apsidesChannel != null) apsidesChannel.Fire(OutboundPackets.Apsides, myApsides);
         }
 
