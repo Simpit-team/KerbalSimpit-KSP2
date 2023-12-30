@@ -9,6 +9,8 @@ using UnityEngine;
 using Simpit.Utilities;
 using SpaceWarp.API.Game;
 using SpaceWarp.API.Game.Extensions;
+using KSP.Game;
+using KSP.Messages;
 
 namespace Simpit.Providers
 {
@@ -87,10 +89,9 @@ namespace Simpit.Providers
         private bool lastThrottleSentIsZero = true;
 
         private AutopilotMode mySASMode;
-        /*
-        private Vessel lastActiveVessel;
-        */
 
+        private VesselComponent lastActiveVessel;
+        
         protected FlightCtrlState lastFlightCtrlState = new FlightCtrlState();
 
         public void Start()
@@ -114,19 +115,21 @@ namespace Simpit.Providers
 
             SASInfoChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.SASInfo);
 
+            SimpitPlugin.AddToDeviceHandler(SASInfoProvider);
+
             mySASInfo.currentSASMode = 255; // value for not enabled
             mySASInfo.SASModeAvailability = 0;
-            /*
-            lastActiveVessel = FlightGlobals.ActiveVessel;
-            FlightGlobals.ActiveVessel.OnPostAutopilotUpdate += AutopilotUpdater;
-            GameEvents.onVesselChange.Add(OnVesselChange);
-            */
+
+            try { lastActiveVessel = Vehicle.ActiveSimVessel; } catch { }
+            
+            //if(lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
+            GameManager.Instance.Game.Messages.Subscribe<VesselChangedMessage>(new Action<MessageCenterMessage>(OnVesselChange));
         }
 
         public void Update()
         {
-            AutopilotUpdater();
-            SASInfoProvider();
+            FlightCtrlState fcs = new FlightCtrlState();
+            AutopilotUpdater(ref fcs, float.NaN);
         }
 
         public void OnDestroy()
@@ -142,23 +145,22 @@ namespace Simpit.Providers
             if (CustomAxisChannel != null) CustomAxisChannel.Remove(customAxisCallback);
             */
             if (AutopilotChannel != null) AutopilotChannel.Remove(autopilotModeCallback);
-            /*
-            KSPit.RemoveToDeviceHandler(SASInfoProvider);
+            SimpitPlugin.RemoveToDeviceHandler(SASInfoProvider);
 
-            lastActiveVessel.OnPostAutopilotUpdate -= AutopilotUpdater;
-            GameEvents.onVesselChange.Remove(OnVesselChange);
-            */
+            //if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPostAutopilotUpdate -= AutopilotUpdater;
+            GameManager.Instance.Game.Messages.Unsubscribe<VesselChangedMessage>(OnVesselChange);
         }
 
-        /*
-        public void OnVesselChange(Vessel vessel)
+        public void OnVesselChange(MessageCenterMessage msg)
         {
-            lastActiveVessel.OnPostAutopilotUpdate -= AutopilotUpdater;
-            lastActiveVessel = FlightGlobals.ActiveVessel;
-            FlightGlobals.ActiveVessel.OnPostAutopilotUpdate += AutopilotUpdater;
-        }
-        */
+            if (!(msg is VesselChangedMessage vesselMessage))
+                return;
 
+            //if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate -= AutopilotUpdater;
+            try { lastActiveVessel = Vehicle.ActiveSimVessel; } catch { }
+            //if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
+        }
+        
         public void vesselRotationCallback(byte ID, object Data)
         {
 
@@ -284,7 +286,7 @@ namespace Simpit.Providers
             }
         }
 
-        public void AutopilotUpdater()//KSP1 FlightCtrlState fcs)
+        public void AutopilotUpdater(ref FlightCtrlState fcs, float deltaTime)
         {
             VesselVehicle currentVessel = null;
             VesselComponent simVessel = null;
@@ -312,6 +314,10 @@ namespace Simpit.Providers
                 fcsi.yaw = (float)myRotation.yaw / Int16.MaxValue;
                 //KSP1 axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Yaw, (float)myRotation.yaw / Int16.MaxValue);
             }
+            if (myRotation.pitch != 0 || myRotation.roll != 0 || myRotation.yaw != 0)
+            {
+                SimpitPlugin.Instance.Logger.LogDebug(String.Format("Rot: {0:0.00}, {1:0.00}, {2:0.00}", fcsi.pitch, fcsi.roll, fcsi.yaw));
+            }
 
             if (myTranslation.X != 0)
             {
@@ -330,7 +336,7 @@ namespace Simpit.Providers
             }
             if (myTranslation.X != 0 || myTranslation.Y != 0 || myTranslation.Z != 0)
             {
-                SimpitPlugin.Instance.Logger.LogDebug("Trsl: " + fcsi.X + ", " + fcsi.Y + ", " + fcsi.Z);
+                SimpitPlugin.Instance.Logger.LogDebug(String.Format("Trsl: {0:0.00}, {1:0.00}, {2:0.00}", fcsi.X, fcsi.Y, fcsi.Z));
             }
 
             /*

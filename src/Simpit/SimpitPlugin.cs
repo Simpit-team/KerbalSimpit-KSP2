@@ -11,10 +11,12 @@ using System.Runtime.InteropServices;
 using Simpit.Providers;
 using SpaceWarp.API.Logging;
 
-//TODO Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
+//TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
 //TODO Add Wheel control
-//TODO Add the missing Outbound messages in AxisControl.cs
+//TODO Problem with translation. Possible solution: Move the AxisControl.AutopilotUpdater from Update to something that resembles FlightGlobals.ActiveVessel.OnPostAutopilotUpdate
+//TODO Add the missing Outbound messages in AxisControl.cs (Include lastFlightCtrlState.CopyFrom(fcs); in AutopilotUpdater in there)
+//TODO Add the custom Axis in AxisControl.cs if this is relevant for KSP2
 //TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
 //TODO Replace all Debug.Log with SimpitPlugin.Instance.Logger.LogInfo and remove the "Simpit : " in front of it
 //TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly. They use the deprecated GameEvents class
@@ -47,7 +49,6 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     public KSPSerialPort port;
 
     //Serial Data Management
-    //TODO Why are the EventData now called EventDataObsolete?!?
     // To receive events from serial devices on channel i,
     // register a callback for onSerialReceivedArray[i].
     public EventDataObsolete<byte, object>[] onSerialReceivedArray = new EventDataObsolete<byte, object>[256];
@@ -229,6 +230,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<KerbalSimpitEchoProvider>();
         providers.AddComponent<KerbalSimpitAxisController>();
         providers.AddComponent<KerbalSimpitActionProvider>();
+        //providers.AddComponent<KerbalSimpitTelemetryProvider>();
     }
 
     private void StartEventDispatch()
