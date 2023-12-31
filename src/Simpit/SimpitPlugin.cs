@@ -14,8 +14,8 @@ using SpaceWarp.API.Logging;
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
 //TODO AxisControl.cs : Add Wheel control and feedback
-//TODO Problem with translation. Possible solution: Move the AxisControl.AutopilotUpdater from Update to something that resembles FlightGlobals.ActiveVessel.OnPostAutopilotUpdate
-//TODO AxisControl.cs : Test the outbound messages
+//TODO AxisControl.cs : Problem with translation. Possible solution: Move the AxisControl.AutopilotUpdater from Update to something that resembles FlightGlobals.ActiveVessel.OnPostAutopilotUpdate
+//TODO AxisControl.cs : Test the outbound messages. The CommandProviders probably have to be added somewhere
 //TODO AxisControl.cs : Add the custom Axis if this is relevant for KSP2
 //TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
 //TODO Replace all Debug.Log with SimpitPlugin.Instance.Logger.LogInfo and remove the "Simpit : " in front of it
@@ -25,6 +25,13 @@ using SpaceWarp.API.Logging;
 //TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
 //TODO Resources.cs : Implement other resources
 //TODO For the Action groups there is now the state "mixed", e.g. if only some lights are on, others are off. Should the mixed state be counted as on or off? Or is there a possibility to also send the mixed state?
+//TODO FlightProvider.cs: what about the FlightStatusBits.isInAtmoTW? Should this be added?
+//TODO FlightProvider.cs: For FlightStatusBits.isInFlight was HighLogic.LoadedSceneIsFlight used which is deprecated. Test if simVessel.IsVesselInFlight() also works
+//TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState) and there is simVessel._commandControlState (which is a CommandControlState Which has a bit more information). Which one should we use?
+//TODO FlightProvider.cs: Add the crew count
+//TODO FlightProvider.cs: Add the signal strength. Is there something like that in KSP2?
+//TODO FlightProvider.cs: Add the currentStage. Is there something like that in KSP2?
+//TODO FlightProvider.cs: Add the vesselType. Is there something like that in KSP2?
 
 namespace Simpit;
 
@@ -237,6 +244,9 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<KerbalSimpitTelemetryProvider>();
         providers.AddComponent<KerbalSimpitWarpControl>();
         providers.AddComponent<KerbalSimpitNavBallProvider>();
+        providers.AddComponent<FlightStatusProvider>();
+        providers.AddComponent<KerbalSimpitCAGProvider>();
+
         providers.AddComponent<MonoPropellantProvider>();
         providers.AddComponent<SolidFuelProvider>();
         providers.AddComponent<SolidFuelStageProvider>();
