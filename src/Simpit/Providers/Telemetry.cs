@@ -328,7 +328,7 @@ namespace Simpit.Providers
 
         //Return the DeltaVStageInfo of the first stage to consider for deltaV and burn time computation
         //KSP1: Can return null when no deltaV is available (for instance in EVA).
-        private DeltaVStageInfo getCurrentStageDeltaV()
+        public static DeltaVStageInfo getCurrentStageDeltaV()
         {
             VesselComponent simVessel = null;
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }

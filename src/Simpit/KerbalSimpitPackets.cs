@@ -12,6 +12,8 @@
         // Propulsion Resources
         public static byte LiquidFuel = 10;
         public static byte LiquidFuelStage = 11;
+        public static byte Methane = 10;
+        public static byte MethaneStage = 11;
         public static byte Oxidizer = 12;
         public static byte OxidizerStage = 13;
         public static byte SolidFuel = 14;

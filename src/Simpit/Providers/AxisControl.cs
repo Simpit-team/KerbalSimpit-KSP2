@@ -122,14 +122,13 @@ namespace Simpit.Providers
 
             try { lastActiveVessel = Vehicle.ActiveSimVessel; } catch { }
             
-            //if(lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
+            if(lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
             GameManager.Instance.Game.Messages.Subscribe<VesselChangedMessage>(new Action<MessageCenterMessage>(OnVesselChange));
         }
 
         public void Update()
         {
-            FlightCtrlState fcs = new FlightCtrlState();
-            AutopilotUpdater(ref fcs, float.NaN);
+            AutopilotUpdater();
         }
 
         public void OnDestroy()
@@ -147,7 +146,7 @@ namespace Simpit.Providers
             if (AutopilotChannel != null) AutopilotChannel.Remove(autopilotModeCallback);
             SimpitPlugin.RemoveToDeviceHandler(SASInfoProvider);
 
-            //if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPostAutopilotUpdate -= AutopilotUpdater;
+            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPostAutopilotUpdate -= AutopilotUpdater;
             GameManager.Instance.Game.Messages.Unsubscribe<VesselChangedMessage>(OnVesselChange);
         }
 
@@ -156,9 +155,9 @@ namespace Simpit.Providers
             if (!(msg is VesselChangedMessage vesselMessage))
                 return;
 
-            //if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate -= AutopilotUpdater;
+            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate -= AutopilotUpdater;
             try { lastActiveVessel = Vehicle.ActiveSimVessel; } catch { }
-            //if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
+            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
         }
         
         public void vesselRotationCallback(byte ID, object Data)
@@ -286,7 +285,7 @@ namespace Simpit.Providers
             }
         }
 
-        public void AutopilotUpdater(ref FlightCtrlState fcs, float deltaTime)
+        public void AutopilotUpdater()//ref FlightCtrlState fcs, float deltaTime)
         {
             VesselVehicle currentVessel = null;
             VesselComponent simVessel = null;
@@ -384,6 +383,11 @@ namespace Simpit.Providers
             //simVessel.ApplyFlightCtrlState(fcsi);
         }
 
+        public void AutopilotUpdater(ref FlightCtrlState fcs, float deltaTime)
+        {
+            lastFlightCtrlState = new FlightCtrlState(fcs);
+        }
+
         public void SASInfoProvider()
         {
             VesselComponent simVessel = null;
@@ -426,7 +430,6 @@ namespace Simpit.Providers
             }
         }
 
-        /*
         class RotationCommandProvider : GenericProvider<RotationalStruct>
         {
             private KerbalSimpitAxisController controller = null;
@@ -483,6 +486,7 @@ namespace Simpit.Providers
             }
         }
 
+        /*
         class WheelCommandProvider : GenericProvider<WheelStruct>
         {
             private KerbalSimpitAxisController controller = null;
@@ -511,7 +515,6 @@ namespace Simpit.Providers
         }
         */
 
-        /*
         class ThrottleCommandProvider : GenericProvider<ThrottleStruct>
         {
             private KerbalSimpitAxisController controller = null;
@@ -537,6 +540,5 @@ namespace Simpit.Providers
                 return false;
             }
         }
-        */
     }
 }

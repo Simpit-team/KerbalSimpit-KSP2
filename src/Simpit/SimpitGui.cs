@@ -1,13 +1,14 @@
-﻿using KSP.Iteration.UI.Binding;
+﻿using KSP.Game;
+using KSP.Sim;
+using KSP.Sim.impl;
+using KSP.Sim.ResourceSystem;
 using KSP.UI.Binding;
+using Simpit.Providers;
 using SpaceWarp.API.Assets;
+using SpaceWarp.API.Game;
 using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
-using UnityEngine.UI.Extensions;
 
 namespace Simpit
 {
@@ -82,7 +83,7 @@ namespace Simpit
                     _windowRect,
                     FillWindow,
                     "Simpit",
-                    GUILayout.Height(250),
+                    GUILayout.Height(310),
                     GUILayout.Width(250)
                 );
             }
@@ -112,6 +113,7 @@ namespace Simpit
             //Add Buttons
             if (GUI.Button(new Rect(10, 190, 100, 50), "Open")) OnButtonOpenPort();
             if (GUI.Button(new Rect(_windowRect.width - 10 - 100, 190, 100, 50), "Close")) OnButtonClosePort();
+            if (GUI.Button(new Rect(_windowRect.width/ 2 - 50, 250, 100, 50), "Debug")) OnDebugButtonPress();
 
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -133,6 +135,32 @@ namespace Simpit
         static void OnButtonOpenPort()
         {
             SimpitPlugin.Instance.OpenPort();
+        }
+
+        static void OnDebugButtonPress()
+        {
+            //KerbalSimpitUtils.PrintAllAvailableResources();
+            SimpitPlugin.Instance.Logger.LogDebug("DebugButtonPress");
+
+            foreach (ResourceUnitsPair r in KerbalSimpitTelemetryProvider.getCurrentStageDeltaV()._resourceIds)
+            {
+                SimpitPlugin.Instance.Logger.LogDebug(String.Format("Found resource \"{0}\"", r));
+            }
+
+            VesselComponent simVessel = null;
+            try { simVessel = Vehicle.ActiveSimVessel; } catch { }
+            if (simVessel != null)
+            {
+                ResourceDefinitionDatabase resourceDatabase = GameManager.Instance.Game.ResourceDefinitionDatabase;
+                simVessel.RefreshFuelPercentages();
+                foreach (KeyValuePair<ResourceDefinitionID, ContainedResourceData> entry in simVessel.fuelCapacity)
+                {
+                    SimpitPlugin.Instance.Logger.LogDebug(String.Format("Found resource \"{0}\" with StoredUnits \"{1}\" in CapacityUnits \"{2}\"",
+                            GameManager.Instance.Game.ResourceDefinitionDatabase.GetResourceNameFromID(entry.Key),
+                            entry.Value.StoredUnits,
+                            entry.Value.CapacityUnits));
+                }
+            }
         }
 
         public static void SetDebugText(string text)

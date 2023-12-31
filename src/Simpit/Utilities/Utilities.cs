@@ -1,3 +1,5 @@
+using KSP.Game;
+using KSP.Sim.ResourceSystem;
 using System;
 using System.Runtime.InteropServices;
 
@@ -17,6 +19,16 @@ namespace Simpit.Utilities
             finally
             {
                 handle.Free();
+            }
+        }
+
+        public static void PrintAllAvailableResources()
+        {
+            ResourceDefinitionDatabase resourceDatabase = GameManager.Instance.Game.ResourceDefinitionDatabase;
+            Dictionary<ResourceDefinitionID, double> resources = new Dictionary<ResourceDefinitionID, double>();
+            foreach (ResourceDefinitionID resourceId in resourceDatabase.GetAllResourceIDs())
+            {
+                SimpitPlugin.Instance.Logger.LogInfo(String.Format("Found resource \"{0}\" with ID \"{1}\"", resourceDatabase.GetDefinitionData(resourceId).name, resourceId));
             }
         }
     }
