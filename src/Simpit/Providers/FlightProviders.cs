@@ -75,8 +75,12 @@ namespace Simpit.Providers
         protected override bool updateMessage(ref FlightStatusStruct myFlightStatus)
         {
             VesselComponent simVessel = null;
-            try { simVessel = Vehicle.ActiveSimVessel; } catch { }
-            TimeWarp tw = GameManager.Instance.Game.ViewController.TimeWarp;
+            TimeWarp tw = null;
+            try 
+            { 
+                simVessel = Vehicle.ActiveSimVessel; 
+                tw = GameManager.Instance.Game.ViewController.TimeWarp;
+            } catch { }
             if (simVessel == null || tw == null) return false;
 
             myFlightStatus.flightStatusFlags = 0;

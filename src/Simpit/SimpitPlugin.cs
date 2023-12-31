@@ -32,6 +32,7 @@ using SpaceWarp.API.Logging;
 //TODO FlightProvider.cs: Add the signal strength. Is there something like that in KSP2?
 //TODO FlightProvider.cs: Add the currentStage. Is there something like that in KSP2?
 //TODO FlightProvider.cs: Add the vesselType. Is there something like that in KSP2?
+//TODO TargetInfo.cs: Test the TargetProvider
 
 namespace Simpit;
 
@@ -268,6 +269,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         //providers.AddComponent<XenonECStageProvider>();
         providers.AddComponent<AblatorProvider>();
         providers.AddComponent<AblatorStageProvider>();
+        providers.AddComponent<KerbalSimpitTargetProvider>();
     }
 
     private void StartEventDispatch()

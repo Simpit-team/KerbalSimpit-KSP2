@@ -5,7 +5,7 @@
   "name": "Simpit",
   "description": "Provides a serial connection interface for custom controllers.",
   "source": "",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "version_check": "",
   "ksp2_version": {
     "min": "0.1.5",
