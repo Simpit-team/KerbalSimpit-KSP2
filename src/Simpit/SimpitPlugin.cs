@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Simpit.Providers;
 using SpaceWarp.API.Logging;
+using System.Collections.Concurrent;
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
@@ -33,6 +34,9 @@ using SpaceWarp.API.Logging;
 //TODO FlightProvider.cs: Add the currentStage. Is there something like that in KSP2?
 //TODO FlightProvider.cs: Add the vesselType. Is there something like that in KSP2?
 //TODO TargetInfo.cs: Test the TargetProvider
+//TODO Does the scene change notification stuff work?
+
+//TODO Work on an Arduino side that can test all the features. Should come in handy when I have to update the KSP2 side. Could also come in handy as an example to show how to use all the functions.
 
 namespace Simpit;
 

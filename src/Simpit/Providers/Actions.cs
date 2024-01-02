@@ -326,7 +326,8 @@ namespace Simpit.Providers
             {
                 groups = (byte)(groups | ActionGroupBits.SASBit);
             }
-            if (currentVessel.GetGroup(KSPActionGroup.Brakes))
+            //if (currentVessel.GetGroup(KSPActionGroup.Brakes))
+            if (simVessel.GetActionGroupState(KSPActionGroup.Brakes) == KSPActionGroupState.True)
             {
                 groups = (byte)(groups | ActionGroupBits.BrakesBit);
             }

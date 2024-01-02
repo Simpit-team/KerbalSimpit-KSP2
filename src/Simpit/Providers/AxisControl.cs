@@ -155,7 +155,7 @@ namespace Simpit.Providers
             if (!(msg is VesselChangedMessage vesselMessage))
                 return;
 
-            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate -= AutopilotUpdater;
+            if (lastActiveVessel != null && lastActiveVessel.Autopilot != null && lastActiveVessel.Autopilot._vesselView != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate -= AutopilotUpdater;
             try { lastActiveVessel = Vehicle.ActiveSimVessel; } catch { }
             if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
         }

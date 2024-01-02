@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Runtime.InteropServices;
 using KSP.Game;
@@ -16,6 +17,8 @@ namespace Simpit.Providers
         private EventDataObsolete<byte, object> customLogEvent;
         private EventDataObsolete<byte, object> sceneChangeEvent;
         private EventDataObsolete<byte, object> controlledVesselChangeEvent;
+
+        public ConcurrentQueue<NotificationData> notificationQueue = new ConcurrentQueue<NotificationData>();
 
         public void Start()
         {
@@ -49,6 +52,16 @@ namespace Simpit.Providers
             }));
         }
 
+        public void Update()
+        {
+            if (!notificationQueue.IsEmpty)
+            {
+                NotificationData notification;
+                notificationQueue.TryDequeue(out notification);
+                GameManager.Instance.Game.Notifications.ProcessNotification(notification);
+            }
+        }
+
         public void OnDestroy()
         {
             if (echoRequestEvent != null) echoRequestEvent.Remove(EchoRequestCallback);
@@ -77,6 +90,8 @@ namespace Simpit.Providers
             byte logStatus = payload[0];
             String message = System.Text.Encoding.UTF8.GetString(payload.Skip(1).ToArray());
 
+            SimpitGui.SetDebugText(message);
+
             if((logStatus & CustomLogBits.NoHeader) == 0)
             {
                 message = "Simpit : " + message;
@@ -84,14 +99,13 @@ namespace Simpit.Providers
 
             if ((logStatus & CustomLogBits.PrintToScreen) != 0)
             {
-                //KSP1 UnityMainThreadDispatcher.Instance().Enqueue(() => ScreenMessages.PostScreenMessage(message));
-                GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
+                notificationQueue.Enqueue(new NotificationData
                 {
                     Tier = NotificationTier.Passive,
                     Primary = new NotificationLineItemData { LocKey = message }
                 });
             }
-
+            
             if ((logStatus & CustomLogBits.Verbose) == 0 || SimpitPlugin.Instance.config_verbose)
             {
                 SimpitPlugin.Instance.Logger.LogInfo(message);
