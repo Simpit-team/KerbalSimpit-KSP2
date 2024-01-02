@@ -142,25 +142,7 @@ namespace Simpit
             //KerbalSimpitUtils.PrintAllAvailableResources();
             SimpitPlugin.Instance.Logger.LogDebug("DebugButtonPress");
 
-            foreach (ResourceUnitsPair r in KerbalSimpitTelemetryProvider.getCurrentStageDeltaV()._resourceIds)
-            {
-                SimpitPlugin.Instance.Logger.LogDebug(String.Format("Found resource \"{0}\"", r));
-            }
-
-            VesselComponent simVessel = null;
-            try { simVessel = Vehicle.ActiveSimVessel; } catch { }
-            if (simVessel != null)
-            {
-                ResourceDefinitionDatabase resourceDatabase = GameManager.Instance.Game.ResourceDefinitionDatabase;
-                simVessel.RefreshFuelPercentages();
-                foreach (KeyValuePair<ResourceDefinitionID, ContainedResourceData> entry in simVessel.fuelCapacity)
-                {
-                    SimpitPlugin.Instance.Logger.LogDebug(String.Format("Found resource \"{0}\" with StoredUnits \"{1}\" in CapacityUnits \"{2}\"",
-                            GameManager.Instance.Game.ResourceDefinitionDatabase.GetResourceNameFromID(entry.Key),
-                            entry.Value.StoredUnits,
-                            entry.Value.CapacityUnits));
-                }
-            }
+            
         }
 
         public static void SetDebugText(string text)

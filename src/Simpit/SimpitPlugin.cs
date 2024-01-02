@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Simpit.Providers;
 using SpaceWarp.API.Logging;
-using System.Collections.Concurrent;
+using Simpit.External;
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
@@ -251,6 +251,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<KerbalSimpitNavBallProvider>();
         providers.AddComponent<FlightStatusProvider>();
         providers.AddComponent<KerbalSimpitCAGProvider>();
+        providers.AddComponent<KeyboardEmulator>();
 
         providers.AddComponent<MonoPropellantProvider>();
         providers.AddComponent<SolidFuelProvider>();
