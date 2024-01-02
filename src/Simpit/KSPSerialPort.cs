@@ -453,7 +453,7 @@ namespace KerbalSimpit.Serial
                         Port.Write(dequeued, 0, dequeued.Length);
                         dequeued = null;
                     }
-                    catch (System.IO.IOException exc)
+                    catch
                     {
                         //SimpitPlugin.Instance.Logger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                         handleError();
@@ -488,7 +488,7 @@ namespace KerbalSimpit.Serial
                         ReceivedDataEvent(received, actualLength);
                     }
                 }
-                catch(System.IO.IOException exc)
+                catch
                 {
                     //SimpitPlugin.Instance.Logger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                     handleError();

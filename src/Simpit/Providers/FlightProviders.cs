@@ -6,6 +6,8 @@ using static KSP.Api.UIDataPropertyStrings.View;
 using SpaceWarp.API.Game;
 using KSP.Sim.Definitions;
 using KSP.Game;
+using KSP.Map;
+using KSP.Sim.DeltaV;
 
 namespace Simpit.Providers
 {
@@ -87,7 +89,7 @@ namespace Simpit.Providers
             if (simVessel.IsVesselInFlight()) myFlightStatus.flightStatusFlags += FlightStatusBits.isInFlight;
             if (simVessel.IsKerbalEVA) myFlightStatus.flightStatusFlags += FlightStatusBits.isEva;
             if (simVessel.IsVesselRecoverable) myFlightStatus.flightStatusFlags += FlightStatusBits.isRecoverable;
-            //if (tw.Mode == TimeWarp.Modes.LOW) myFlightStatus.flightStatusFlags += FlightStatusBits.isInAtmoTW;
+            if (tw.IsPhysicsTimeWarp) myFlightStatus.flightStatusFlags += FlightStatusBits.isInAtmoTW;
             switch (simVessel.ControlStatus)
             {
                 case VesselControlState.NoControl:
@@ -108,9 +110,12 @@ namespace Simpit.Providers
             myFlightStatus.vesselSituation = (byte)simVessel.Situation;
             myFlightStatus.currentTWIndex = (byte)tw.CurrentRateIndex;
             myFlightStatus.crewCapacity = (byte)Math.Min(Byte.MaxValue, simVessel.TotalCommandCrewCapacity);
-            /*
-            myFlightStatus.crewCount = (byte)Math.Min(Byte.MaxValue, simVessel.GetCrewCount());
+            myFlightStatus.crewCount = (byte)Math.Min(Byte.MaxValue, GameManager.Instance.Game.SessionManager.KerbalRosterManager.GetAllKerbalsInVessel(simVessel.GlobalId).Count);
 
+            //TODO is there even Data on KSP2 that can be used here? For now just use 0% and 100% depending on CommNet availability
+            if (simVessel.ControlStatus == VesselControlState.NoControl || simVessel.ControlStatus == VesselControlState.NoCommNet) myFlightStatus.commNetSignalStrenghPercentage = 0;
+            else myFlightStatus.commNetSignalStrenghPercentage = 100;
+            /* 
             if (simVessel.connection == null)
             {
                 myFlightStatus.commNetSignalStrenghPercentage = 0;
@@ -119,11 +124,21 @@ namespace Simpit.Providers
             {
                 myFlightStatus.commNetSignalStrenghPercentage = (byte)Math.Round(100 * FlightGlobals.ActiveVessel.connection.SignalStrength);
             }
-
-            myFlightStatus.currentStage = (byte)Math.Min(255, simVessel.currentStage);
-            myFlightStatus.vesselType = (byte)simVessel.vesselType;
             */
+            myFlightStatus.currentStage = (byte)Math.Min(255, DeltaVExtensions.CurrentStage(simVessel.VesselDeltaV));
+            myFlightStatus.vesselType = (byte)ConstructMapItemFromVessel(simVessel);
             return false;
+        }
+
+        //Taken from MapCore.cs
+        private MapItemType ConstructMapItemFromVessel(VesselComponent vessel)
+        {
+            MapItemType mapItemType = MapItemType.Vessel;
+            if (vessel.ControlStatus == VesselControlState.NoControl && vessel.IsDebris())
+                mapItemType = MapItemType.Debris;
+            else if (vessel.IsKerbalEVA)
+                mapItemType = MapItemType.Astronaut;
+            return mapItemType;
         }
     }
     #endregion

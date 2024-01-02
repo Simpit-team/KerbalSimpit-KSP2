@@ -79,7 +79,7 @@ namespace Simpit.Providers
         public void Start()
         {
             //AGXPresent = AGXInstalled();
-            //if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo(String.Format("KerbalSimpit: ActionGroupsExtended installed: {0}", AGXPresent));
+            //if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo(String.Format("ActionGroupsExtended installed: {0}", AGXPresent));
 
             enableChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + InboundPackets.CAGEnable);
             if (enableChannel != null) enableChannel.Add(enableCAGCallback);

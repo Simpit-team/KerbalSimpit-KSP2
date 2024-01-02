@@ -163,11 +163,13 @@ namespace Simpit.Providers
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating abort");
                 simVessel.SetActionGroup(KSPActionGroup.Abort, true);
             }
+            /* Moved to single action group message
             if ((groups & ActionGroupBits.SolarPanelsBit) != 0)
             {
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating solar panels");
                 simVessel.SetActionGroup(KSPActionGroup.SolarPanels, true);
             }
+            */
         }
 
         private void deactivateGroups(byte groups)
@@ -221,11 +223,13 @@ namespace Simpit.Providers
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating abort");
                 simVessel.SetActionGroup(KSPActionGroup.Abort, false);
             }
+            /* Moved to single action group message
             if ((groups & ActionGroupBits.SolarPanelsBit) != 0)
             {
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating solar panels");
                 simVessel.SetActionGroup(KSPActionGroup.SolarPanels, false);
             }
+            */
         }
 
         private void toggleGroups(byte groups)
@@ -280,11 +284,13 @@ namespace Simpit.Providers
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling abort");
                 simVessel.TriggerActionGroup(KSPActionGroup.Abort);
             }
+            /* Moved to single action group message
             if ((groups & ActionGroupBits.SolarPanelsBit) != 0)
             {
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling solar panels");
                 simVessel.TriggerActionGroup(KSPActionGroup.SolarPanels);
             }
+            */
         }
 
         private byte getGroups()
@@ -335,10 +341,12 @@ namespace Simpit.Providers
             {
                 groups = (byte)(groups | ActionGroupBits.AbortBit);
             }
+            /* Moved to single action group message
             if (simVessel.GetActionGroupState(KSPActionGroup.SolarPanels) == KSPActionGroupState.True)
             {
                 groups = (byte)(groups | ActionGroupBits.SolarPanelsBit);
             }
+            */
             return groups;
         }
     }

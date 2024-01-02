@@ -224,12 +224,12 @@ namespace Simpit.Providers
                 if (SimpitPlugin.Instance.config_verbose) 
                 {
                     SimpitPlugin.Instance.Logger.LogInfo(String.Format("payload is {0}", mySASMode));
-                    SimpitPlugin.Instance.Logger.LogInfo(String.Format("KerbalSimpit: SAS mode is {0}", autopilot._mode.ToString()));
+                    SimpitPlugin.Instance.Logger.LogInfo(String.Format("SAS mode is {0}", autopilot._mode.ToString()));
                 }
             }
             else
             {
-                SimpitPlugin.Instance.Logger.LogInfo(String.Format("KerbalSimpit: Unable to set SAS mode to {0}", mySASMode.ToString()));
+                SimpitPlugin.Instance.Logger.LogInfo(String.Format("Unable to set SAS mode to {0}", mySASMode.ToString()));
             }
         }
 
@@ -239,9 +239,9 @@ namespace Simpit.Providers
             if (myRotation.roll != 0) fcs.roll = (float)myRotation.roll / Int16.MaxValue;
             if (myRotation.yaw != 0) fcs.yaw = (float)myRotation.yaw / Int16.MaxValue;
             
-            if (myTranslation.X != 0) fcs.X = (float)myTranslation.X / Int16.MaxValue;
-            if (myTranslation.Y != 0) fcs.Y = (float)myTranslation.Y / Int16.MaxValue;
-            if (myTranslation.Z != 0) fcs.Z = (float)myTranslation.Z / Int16.MaxValue;
+            if (myTranslation.X != 0) fcs.X = ((float)myTranslation.X / Int16.MaxValue) * -1;
+            if (myTranslation.Y != 0) fcs.Y = ((float)myTranslation.Y / Int16.MaxValue) * -1;
+            if (myTranslation.Z != 0) fcs.Z = ((float)myTranslation.Z / Int16.MaxValue) * -1;
             
             if (myWheel.steer != 0) fcs.wheelSteer = (float)myWheel.steer / Int16.MaxValue;
             if (myWheel.throttle != 0) fcs.wheelThrottle = (float)myWheel.throttle / Int16.MaxValue;

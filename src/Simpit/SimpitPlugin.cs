@@ -12,31 +12,38 @@ using Simpit.Providers;
 using SpaceWarp.API.Logging;
 using Simpit.External;
 
-//TODO FlightProvider.cs: Add the crew count
-//TODO FlightProvider.cs: Add the signal strength. Is there something like that in KSP2?
-//TODO FlightProvider.cs: Add the currentStage. Is there something like that in KSP2?
-//TODO FlightProvider.cs: Add the vesselType. Is there something like that in KSP2?
+
 //TODO Support multiple serial ports
+//TODO Automatically open port on game start
+//TODO Add a Science Collection feature + info when science gets available 
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
 //TODO AxisControl.cs : Test the outbound messages. The CommandProviders probably have to be added somewhere
 //TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
 //TODO FlightProvider.cs: For FlightStatusBits.isInFlight was HighLogic.LoadedSceneIsFlight used which is deprecated. Test if simVessel.IsVesselInFlight() also works
+//TODO FlightProvider.cs: Does the crew count work correctly?
 //TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly.
 //TODO Telemetry.cs : Please check/test especially airspeed, maneuverData, rotationData 
 //TODO WarpControl.cs : Please check/test especially setting a specific warp level, timewarp to Ap/Pe/SOI change/Next morining
 //TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
 //TODO TargetInfo.cs: Test the TargetProvider
 //TODO Does the scene change notification stuff work?
+//TODO FlightProvider.cs: Get a better CommNet signal strength. Is there something like that in KSP2? Can it be calculated by antennas and distance?
 
-//TODO Send KSP version in Handshake
-//TODO Resources.cs : Implemented other resources: OutboundPackets 52 to 62
-//TODO Resources.cs : TestRocks :D
+//TODO Arduino lib: add a flag for KSP version which is sent in Handshake
+//TODO Arduino lib - Resources.cs : Implement other resources: OutboundPackets 52 to 62
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
 //TODO For the Action groups there is now the state "mixed", e.g. if only some lights are on, others are off. Should the mixed state be counted as on or off? Or is there a possibility to also send the mixed state?
-//TODO FlightProvider.cs: what about the FlightStatusBits.isInAtmoTW? Should this be added?
+//TODO FlightProvider.cs: what about the FlightStatusBits.isInAtmoTW? I currently have it sending tw.IsPhysicsTimeWarp
 //TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Which one should we use?
+//TODO FlightProvider.cs: the vesselType (debris, rover, probe, ship, ...) does not seem to exist in KSP2 the closest is the MapItemType.
+//TODO FlightProvider.cs: Test the currentStage. It sends -1
+
+//TODO Two more new messages for action groups: SetSingleActionGroup and FeedbackValue (On, Off, Mixed) on all three sides (Arduino, KSP1, KSP2)
+//Extend define of action groups: 6 bits for addr of action group  2 bits for state on,off,mixed,notAvailable
+//                                                                 2 bits for on,off,toggle
+//Wrapper functions for arduino
 
 //TODO Work on an Arduino side that can test all the features. Should come in handy when I have to update the KSP2 side. Could also come in handy as an example to show how to use all the functions.
 
@@ -338,7 +345,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         byte[] payload = (byte[])data;
         HandshakePacket hs;
-        hs.Payload = 0x37;
+        hs.Payload = HandshakeValues.KerbalSpaceProgram2;
         switch (payload[0])
         {
             case 0x00:

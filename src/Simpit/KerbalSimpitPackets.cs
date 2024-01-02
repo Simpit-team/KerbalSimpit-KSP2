@@ -22,6 +22,17 @@
         public static byte XenonGasStage = 29;
         public static byte MonoPropellant = 16;
         public static byte EvaPropellant = 18;
+
+        // Vessel Resources
+        public static byte ElectricCharge = 17;
+        public static byte Ore = 19;
+        public static byte Ablator = 20;
+        public static byte AblatorStage = 21;
+        public static byte TACLSResource = 30;
+        public static byte TACLSWaste = 31;
+        public static byte CustomResource1 = 32;
+        public static byte CustomResource2 = 33;
+
         //Propulsion Resources on KSP2
         public static byte IntakeAir = 52;
         public static byte TestRocks = 53;
@@ -34,17 +45,6 @@
         public static byte Uranium = 60;
         public static byte XenonEC = 61;
         public static byte XenonECStage = 62;
-
-
-        // Vessel Resources
-        public static byte ElectricCharge = 17;
-        public static byte Ore = 19;
-        public static byte Ablator = 20;
-        public static byte AblatorStage = 21;
-        public static byte TACLSResource = 30;
-        public static byte TACLSWaste = 31;
-        public static byte CustomResource1 = 32;
-        public static byte CustomResource2 = 33;
 
         // Vessel Movement/Postion
         public static byte Altitude = 8;
@@ -109,6 +109,12 @@
         public static byte NavballMode = 28;
     }
 
+    public static class HandshakeValues
+    {
+        public static byte KerbalSpaceProgram1 = 0x37;
+        public static byte KerbalSpaceProgram2 = 0xC8;
+    }
+
     public static class CameraControlBits
     {
         // Flight Camera Modes
@@ -146,7 +152,6 @@
         public static byte SASBit = 16;
         public static byte BrakesBit = 32;
         public static byte AbortBit = 64;
-        public static byte SolarPanelsBit = 128;
     }
 
     public static class WarpControlValues
