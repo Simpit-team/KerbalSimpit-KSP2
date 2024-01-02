@@ -34,7 +34,6 @@ namespace Simpit.Providers
             public short Z;
             public byte mask;
         }
-        /*
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         [Serializable]
         public struct WheelStruct
@@ -43,6 +42,7 @@ namespace Simpit.Providers
             public short throttle;
             public byte mask;
         }
+        /*
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         [Serializable]
         public struct CustomAxixStruct
@@ -77,9 +77,9 @@ namespace Simpit.Providers
 
         private TranslationalStruct myTranslation, newTranslation;
 
-        /*
         private WheelStruct myWheel, newWheel;
 
+        /*
         private CustomAxixStruct myCustomAxis, newCustomAxis;
         */
 
@@ -100,10 +100,8 @@ namespace Simpit.Providers
             if (RotationChannel != null) RotationChannel.Add(vesselRotationCallback);
             TranslationChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + InboundPackets.VesselTranslation);
             if (TranslationChannel != null) TranslationChannel.Add(vesselTranslationCallback);
-            /*
             WheelChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + InboundPackets.WheelControl);
             if (WheelChannel != null) WheelChannel.Add(wheelCallback);
-            */
             ThrottleChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + InboundPackets.VesselThrottle);
             if (ThrottleChannel != null) ThrottleChannel.Add(throttleCallback);
             /*
@@ -122,22 +120,14 @@ namespace Simpit.Providers
 
             try { lastActiveVessel = Vehicle.ActiveSimVessel; } catch { }
             
-            if(lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
+            if(lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnAutopilotUpdate += AutopilotUpdater;
             GameManager.Instance.Game.Messages.Subscribe<VesselChangedMessage>(new Action<MessageCenterMessage>(OnVesselChange));
         }
-
-        public void Update()
-        {
-            AutopilotUpdater();
-        }
-
         public void OnDestroy()
         {
             if (RotationChannel != null) RotationChannel.Remove(vesselRotationCallback);
             if (TranslationChannel != null) TranslationChannel.Remove(vesselTranslationCallback);
-            /*
             if (WheelChannel != null) WheelChannel.Remove(wheelCallback);
-            */
             if (ThrottleChannel != null) ThrottleChannel.Remove(throttleCallback);
 
             /*
@@ -146,7 +136,7 @@ namespace Simpit.Providers
             if (AutopilotChannel != null) AutopilotChannel.Remove(autopilotModeCallback);
             SimpitPlugin.RemoveToDeviceHandler(SASInfoProvider);
 
-            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPostAutopilotUpdate -= AutopilotUpdater;
+            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnAutopilotUpdate -= AutopilotUpdater;
             GameManager.Instance.Game.Messages.Unsubscribe<VesselChangedMessage>(OnVesselChange);
         }
 
@@ -155,9 +145,9 @@ namespace Simpit.Providers
             if (!(msg is VesselChangedMessage vesselMessage))
                 return;
 
-            if (lastActiveVessel != null && lastActiveVessel.Autopilot != null && lastActiveVessel.Autopilot._vesselView != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate -= AutopilotUpdater;
+            if (lastActiveVessel != null && lastActiveVessel.Autopilot != null && lastActiveVessel.Autopilot._vesselView != null) lastActiveVessel.Autopilot._vesselView.OnAutopilotUpdate -= AutopilotUpdater;
             try { lastActiveVessel = Vehicle.ActiveSimVessel; } catch { }
-            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnPreAutopilotUpdate += AutopilotUpdater;
+            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnAutopilotUpdate += AutopilotUpdater;
         }
         
         public void vesselRotationCallback(byte ID, object Data)
@@ -168,18 +158,9 @@ namespace Simpit.Providers
             // pitch = 1
             // roll = 2
             // yaw = 4
-            if ((newRotation.mask & (byte)1) > 0)
-            {
-                myRotation.pitch = newRotation.pitch;
-            }
-            if ((newRotation.mask & (byte)2) > 0)
-            {
-                myRotation.roll = newRotation.roll;
-            }
-            if ((newRotation.mask & (byte)4) > 0)
-            {
-                myRotation.yaw = newRotation.yaw;
-            }
+            if ((newRotation.mask & (byte)1) > 0) myRotation.pitch = newRotation.pitch;
+            if ((newRotation.mask & (byte)2) > 0) myRotation.roll = newRotation.roll;
+            if ((newRotation.mask & (byte)4) > 0) myRotation.yaw = newRotation.yaw;
         }
 
         public void vesselTranslationCallback(byte ID, object Data)
@@ -189,57 +170,30 @@ namespace Simpit.Providers
             // X = 1
             // Y = 2
             // Z = 4
-            if ((newTranslation.mask & (byte)1) > 0)
-            {
-                myTranslation.X = newTranslation.X;
-            }
-            if ((newTranslation.mask & (byte)2) > 0)
-            {
-                myTranslation.Y = newTranslation.Y;
-            }
-            if ((newTranslation.mask & (byte)4) > 0)
-            {
-                myTranslation.Z = newTranslation.Z;
-            }
+            if ((newTranslation.mask & (byte)1) > 0) myTranslation.X = newTranslation.X; 
+            if ((newTranslation.mask & (byte)2) > 0) myTranslation.Y = newTranslation.Y;
+            if ((newTranslation.mask & (byte)4) > 0) myTranslation.Z = newTranslation.Z;
         }
 
-        /*
         public void wheelCallback(byte ID, object Data)
         {
             newWheel = KerbalSimpitUtils.ByteArrayToStructure<WheelStruct>((byte[])Data);
             // Bit fields
             // steer = 1
             // throttle = 2
-            if ((newWheel.mask & (byte)1) > 0)
-            {
-                myWheel.steer = newWheel.steer;
-            }
-            if ((newWheel.mask & (byte)2) > 0)
-            {
-                myWheel.throttle = newWheel.throttle;
-            }
+            if ((newWheel.mask & (byte)1) > 0) myWheel.steer = newWheel.steer;
+            if ((newWheel.mask & (byte)2) > 0) myWheel.throttle = newWheel.throttle;
         }
 
+        /*
         public void customAxisCallback(byte ID, object Data)
         {
             newCustomAxis = KerbalSimpitUtils.ByteArrayToStructure<CustomAxixStruct>((byte[])Data);
 
-            if ((newCustomAxis.mask & (byte)1) > 0)
-            {
-                myCustomAxis.custom1 = newCustomAxis.custom1;
-            }
-            if ((newCustomAxis.mask & (byte)2) > 0)
-            {
-                myCustomAxis.custom2 = newCustomAxis.custom2;
-            }
-            if ((newCustomAxis.mask & (byte)4) > 0)
-            {
-                myCustomAxis.custom3 = newCustomAxis.custom3;
-            }
-            if ((newCustomAxis.mask & (byte)8) > 0)
-            {
-                myCustomAxis.custom4 = newCustomAxis.custom4;
-            }
+            if ((newCustomAxis.mask & (byte)1) > 0) myCustomAxis.custom1 = newCustomAxis.custom1;
+            if ((newCustomAxis.mask & (byte)2) > 0) myCustomAxis.custom2 = newCustomAxis.custom2;
+            if ((newCustomAxis.mask & (byte)4) > 0) myCustomAxis.custom3 = newCustomAxis.custom3;
+            if ((newCustomAxis.mask & (byte)8) > 0) myCustomAxis.custom4 = newCustomAxis.custom4;
         }
         */
 
@@ -253,10 +207,7 @@ namespace Simpit.Providers
             byte[] payload = (byte[])Data;
             
             VesselComponent simVessel = null;
-            try
-            {
-                simVessel = Vehicle.ActiveSimVessel;
-            }
+            try { simVessel = Vehicle.ActiveSimVessel; }
             catch { }
             if (simVessel == null) return;
 
@@ -285,107 +236,36 @@ namespace Simpit.Providers
             }
         }
 
-        public void AutopilotUpdater()//ref FlightCtrlState fcs, float deltaTime)
+        public void AutopilotUpdater(ref FlightCtrlState fcs, float deltaTime)
         {
-            VesselVehicle currentVessel = null;
-            VesselComponent simVessel = null;
-            try 
-            { 
-                currentVessel = Vehicle.ActiveVesselVehicle; 
-                simVessel = Vehicle.ActiveSimVessel; 
-            }
-            catch { }
-            if (currentVessel == null || simVessel == null) return;
-            FlightCtrlStateIncremental fcsi = new FlightCtrlStateIncremental();
-
-            if (myRotation.pitch != 0)
-            {
-                fcsi.pitch = (float)myRotation.pitch / Int16.MaxValue;
-                //KSP1 axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Pitch, (float)myRotation.pitch / Int16.MaxValue);
-            }
-            if (myRotation.roll != 0)
-            {
-                fcsi.roll = (float)myRotation.roll / Int16.MaxValue;
-                //KSP1 axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Roll, (float)myRotation.roll / Int16.MaxValue);
-            }
-            if (myRotation.yaw != 0)
-            {
-                fcsi.yaw = (float)myRotation.yaw / Int16.MaxValue;
-                //KSP1 axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Yaw, (float)myRotation.yaw / Int16.MaxValue);
-            }
-            if (myRotation.pitch != 0 || myRotation.roll != 0 || myRotation.yaw != 0)
-            {
-                SimpitPlugin.Instance.Logger.LogDebug(String.Format("Rot: {0:0.00}, {1:0.00}, {2:0.00}", fcsi.pitch, fcsi.roll, fcsi.yaw));
-            }
-
-            if (myTranslation.X != 0)
-            {
-                fcsi.X = (float)myTranslation.X / Int16.MaxValue;
-                //KSP1 axisGroupModule.UpdateAxisGroup(KSPAxisGroup.TranslateX, (float)myTranslation.X / Int16.MaxValue);
-            }
-            if (myTranslation.Y != 0)
-            {
-                fcsi.Y = (float)myTranslation.Y / Int16.MaxValue;
-                //KSP1 axisGroupModule.UpdateAxisGroup(KSPAxisGroup.TranslateY, (float)myTranslation.Y / Int16.MaxValue);
-            }
-            if (myTranslation.Z != 0)
-            {
-                fcsi.Z = (float)myTranslation.Z / Int16.MaxValue;
-                //KSP1 axisGroupModule.UpdateAxisGroup(KSPAxisGroup.TranslateZ, (float)myTranslation.Z / Int16.MaxValue);
-            }
-            if (myTranslation.X != 0 || myTranslation.Y != 0 || myTranslation.Z != 0)
-            {
-                SimpitPlugin.Instance.Logger.LogDebug(String.Format("Trsl: {0:0.00}, {1:0.00}, {2:0.00}", fcsi.X, fcsi.Y, fcsi.Z));
-            }
-
-            /*
-            if (myWheel.steer != 0)
-            {
-                fcs.wheelSteer = (float)myWheel.steer / Int16.MaxValue;
-                axisGroupModule.UpdateAxisGroup(KSPAxisGroup.WheelSteer, (float)myWheel.steer / Int16.MaxValue);
-            }
-            if (myWheel.throttle != 0)
-            {
-                fcs.wheelThrottle = (float)myWheel.throttle / Int16.MaxValue;
-                axisGroupModule.UpdateAxisGroup(KSPAxisGroup.WheelThrottle, (float)myWheel.throttle / Int16.MaxValue);
-            }
-            */
-
+            if (myRotation.pitch != 0) fcs.pitch = (float)myRotation.pitch / Int16.MaxValue;
+            if (myRotation.roll != 0) fcs.roll = (float)myRotation.roll / Int16.MaxValue;
+            if (myRotation.yaw != 0) fcs.yaw = (float)myRotation.yaw / Int16.MaxValue;
+            
+            if (myTranslation.X != 0) fcs.X = (float)myTranslation.X / Int16.MaxValue;
+            if (myTranslation.Y != 0) fcs.Y = (float)myTranslation.Y / Int16.MaxValue;
+            if (myTranslation.Z != 0) fcs.Z = (float)myTranslation.Z / Int16.MaxValue;
+            
+            if (myWheel.steer != 0) fcs.wheelSteer = (float)myWheel.steer / Int16.MaxValue;
+            if (myWheel.throttle != 0) fcs.wheelThrottle = (float)myWheel.throttle / Int16.MaxValue;
+            
             if (myThrottle != 0 || !lastThrottleSentIsZero)
             {
                 // Throttle seems to be handled differently than the other axis since when no value is set, a zero is assumed. For throttle, no value set mean the last one is used.
                 // So we need to send a 0 first before stopping to send values.
-                fcsi.mainThrottle = (float)myThrottle / Int16.MaxValue;
-
+                fcs.mainThrottle = (float)myThrottle / Int16.MaxValue;
                 lastThrottleSentIsZero = (myThrottle == 0);
             }
             /*
-            if (myCustomAxis.custom1 != 0)
-            {
-                axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom01, (float)myCustomAxis.custom1 / Int16.MaxValue);
-            }
-            if (myCustomAxis.custom2 != 0)
-            {
-                axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom02, (float)myCustomAxis.custom2 / Int16.MaxValue);
-            }
-            if (myCustomAxis.custom3 != 0)
-            {
-                axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom03, (float)myCustomAxis.custom3 / Int16.MaxValue);
-            }
-            if (myCustomAxis.custom4 != 0)
-            {
-                axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom04, (float)myCustomAxis.custom4 / Int16.MaxValue);
-            }
+            if (myCustomAxis.custom1 != 0) axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom01, (float)myCustomAxis.custom1 / Int16.MaxValue);
+            if (myCustomAxis.custom2 != 0) axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom02, (float)myCustomAxis.custom2 / Int16.MaxValue);
+            if (myCustomAxis.custom3 != 0) axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom03, (float)myCustomAxis.custom3 / Int16.MaxValue);
+            if (myCustomAxis.custom4 != 0) axisGroupModule.UpdateAxisGroup(KSPAxisGroup.Custom04, (float)myCustomAxis.custom4 / Int16.MaxValue);
             */
             // Store the last flight command to send them in the dedicated channels
-            //TODO KSP1 lastFlightCtrlState.CopyFrom(fcs);
-            currentVessel.AtomicSet(fcsi);
-            //simVessel.ApplyFlightCtrlState(fcsi);
-        }
-
-        public void AutopilotUpdater(ref FlightCtrlState fcs, float deltaTime)
-        {
             lastFlightCtrlState = new FlightCtrlState(fcs);
+            //currentVessel.AtomicSet(fcsi);
+            //simVessel.ApplyFlightCtrlState(fcsi);
         }
 
         public void SASInfoProvider()
@@ -486,7 +366,6 @@ namespace Simpit.Providers
             }
         }
 
-        /*
         class WheelCommandProvider : GenericProvider<WheelStruct>
         {
             private KerbalSimpitAxisController controller = null;
@@ -513,7 +392,6 @@ namespace Simpit.Providers
                 return false;
             }
         }
-        */
 
         class ThrottleCommandProvider : GenericProvider<ThrottleStruct>
         {
