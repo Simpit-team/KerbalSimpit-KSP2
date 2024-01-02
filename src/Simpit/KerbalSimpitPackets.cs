@@ -22,6 +22,19 @@
         public static byte XenonGasStage = 29;
         public static byte MonoPropellant = 16;
         public static byte EvaPropellant = 18;
+        //Propulsion Resources on KSP2
+        public static byte IntakeAir = 52;
+        public static byte TestRocks = 53;
+        public static byte Hydrogen = 54;
+        public static byte HydrogenStage = 55;
+        public static byte Methalox = 56;
+        public static byte MethaloxStage = 57;
+        public static byte MethaneAir = 58;
+        public static byte MethaneAirStage = 59;
+        public static byte Uranium = 60;
+        public static byte XenonEC = 61;
+        public static byte XenonECStage = 62;
+
 
         // Vessel Resources
         public static byte ElectricCharge = 17;

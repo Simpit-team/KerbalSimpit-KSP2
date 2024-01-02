@@ -12,14 +12,12 @@ using Simpit.Providers;
 using SpaceWarp.API.Logging;
 using Simpit.External;
 
-//TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
 //TODO Replace all Debug.Log with SimpitPlugin.Instance.Logger.LogInfo and remove the "Simpit : " in front of it
-//TODO Resources.cs : Implement other resources
 //TODO FlightProvider.cs: Add the crew count
 //TODO FlightProvider.cs: Add the signal strength. Is there something like that in KSP2?
 //TODO FlightProvider.cs: Add the currentStage. Is there something like that in KSP2?
 //TODO FlightProvider.cs: Add the vesselType. Is there something like that in KSP2?
-//TODO Send KSP version in Handshake
+//TODO Support multiple serial ports
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
@@ -27,16 +25,19 @@ using Simpit.External;
 //TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
 //TODO FlightProvider.cs: For FlightStatusBits.isInFlight was HighLogic.LoadedSceneIsFlight used which is deprecated. Test if simVessel.IsVesselInFlight() also works
 //TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly.
-
 //TODO Telemetry.cs : Please check/test especially airspeed, maneuverData, rotationData 
 //TODO WarpControl.cs : Please check/test especially setting a specific warp level, timewarp to Ap/Pe/SOI change/Next morining
 //TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
 //TODO TargetInfo.cs: Test the TargetProvider
 //TODO Does the scene change notification stuff work?
 
+//TODO Send KSP version in Handshake
+//TODO Resources.cs : Implemented other resources: OutboundPackets 52 to 62
+//TODO Resources.cs : TestRocks :D
+//TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
 //TODO For the Action groups there is now the state "mixed", e.g. if only some lights are on, others are off. Should the mixed state be counted as on or off? Or is there a possibility to also send the mixed state?
 //TODO FlightProvider.cs: what about the FlightStatusBits.isInAtmoTW? Should this be added?
-//TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState) and there is simVessel._commandControlState (which is a CommandControlState Which has a bit more information). Which one should we use?
+//TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Which one should we use?
 
 //TODO Work on an Arduino side that can test all the features. Should come in handy when I have to update the KSP2 side. Could also come in handy as an example to show how to use all the functions.
 
@@ -258,22 +259,25 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<MonoPropellantProvider>();
         providers.AddComponent<SolidFuelProvider>();
         providers.AddComponent<SolidFuelStageProvider>();
-        //providers.AddComponent<IntakeAirProvider>();
-        //providers.AddComponent<TestRocksProvider>();
+        providers.AddComponent<IntakeAirProvider>();
+        providers.AddComponent<TestRocksProvider>();
         providers.AddComponent<EvaPropellantProvider>();
-        //providers.AddComponent<HydrogenProvider>();
+        providers.AddComponent<HydrogenProvider>();
+        providers.AddComponent<HydrogenStageProvider>();
         providers.AddComponent<LiquidFuelProvider>();
         providers.AddComponent<LiquidFuelStageProvider>();
         providers.AddComponent<OxidizerProvider>();
         providers.AddComponent<OxidizerStageProvider>();
-        //providers.AddComponent<MethaloxProvider>();
-        //providers.AddComponent<MethaneAirProvider>();
-        //providers.AddComponent<UraniumProvider>();
+        providers.AddComponent<MethaloxProvider>();
+        providers.AddComponent<MethaloxStageProvider>();
+        providers.AddComponent<MethaneAirProvider>();
+        providers.AddComponent<MethaneAirStageProvider>();
+        providers.AddComponent<UraniumProvider>();
         providers.AddComponent<ElectricChargeProvider>();
         providers.AddComponent<XenonGasProvider>();
         providers.AddComponent<XenonGasStageProvider>();
-        //providers.AddComponent<XenonECProvider>();
-        //providers.AddComponent<XenonECStageProvider>();
+        providers.AddComponent<XenonECProvider>();
+        providers.AddComponent<XenonECStageProvider>();
         providers.AddComponent<AblatorProvider>();
         providers.AddComponent<AblatorStageProvider>();
         providers.AddComponent<KerbalSimpitTargetProvider>();

@@ -134,24 +134,27 @@ namespace Simpit.Providers
     class MonoPropellantProvider : GenericResourceProvider { public MonoPropellantProvider() : base(OutboundPackets.MonoPropellant, "MonoPropellant", false) { } }
     class SolidFuelProvider : GenericResourceProvider { public SolidFuelProvider() : base(OutboundPackets.SolidFuel, "SolidFuel", false) { } }
     class SolidFuelStageProvider : GenericResourceProvider { public SolidFuelStageProvider() : base(OutboundPackets.SolidFuelStage, "SolidFuel", true) { } }
-    //TODO class IntakeAirProvider : GenericResourceProvider { public IntakeAirProvider() : base(OutboundPackets.IntakeAir, "IntakeAir", false) { } }
-    //TODO class TestRocksProvider : GenericResourceProvider { public TestRocksProvider() : base(OutboundPackets.TestRocks, "TestRocks", false) { } }
+    class IntakeAirProvider : GenericResourceProvider { public IntakeAirProvider() : base(OutboundPackets.IntakeAir, "IntakeAir", false) { } }
+    class TestRocksProvider : GenericResourceProvider { public TestRocksProvider() : base(OutboundPackets.TestRocks, "TestRocks", false) { } }
     class EvaPropellantProvider : GenericResourceProvider { public EvaPropellantProvider() : base(OutboundPackets.EvaPropellant, "EVAPropellant", false) { } }
-    //TODO class HydrogenProvider : GenericResourceProvider { public HydrogenProvider() : base(OutboundPackets.Hydrogen, "Hydrogen", false) { } }
+    class HydrogenProvider : GenericResourceProvider { public HydrogenProvider() : base(OutboundPackets.Hydrogen, "Hydrogen", false) { } }
+    class HydrogenStageProvider : GenericResourceProvider { public HydrogenStageProvider() : base(OutboundPackets.HydrogenStage, "Hydrogen", true) { } }
     class LiquidFuelProvider : GenericResourceProvider { public LiquidFuelProvider() : base(OutboundPackets.Methane, "Methane", false) { } }
     class LiquidFuelStageProvider : GenericResourceProvider { public LiquidFuelStageProvider() : base(OutboundPackets.MethaneStage, "Methane", true) { } }
     class OxidizerProvider : GenericResourceProvider { public OxidizerProvider() : base(OutboundPackets.Oxidizer, "Oxidizer", false) { } }
     class OxidizerStageProvider : GenericResourceProvider { public OxidizerStageProvider() : base(OutboundPackets.OxidizerStage, "Oxidizer", true) { } }
-    //TODO class MethaloxProvider : GenericResourceProvider { public MethaloxProvider() : base(OutboundPackets.Methalox, "Methalox", false) { } }
-    //TODO class MethaneAirProvider : GenericResourceProvider { public MethaneAirProvider() : base(OutboundPackets.MethaneAir, "MethaneAir", false) { } }
-    //TODO class UraniumProvider : GenericResourceProvider { public UraniumProvider() : base(OutboundPackets.Uranium, "Uranium", false) { } }
+    class MethaloxProvider : GenericResourceProvider { public MethaloxProvider() : base(OutboundPackets.Methalox, "Methalox", false) { } }
+    class MethaloxStageProvider : GenericResourceProvider { public MethaloxStageProvider() : base(OutboundPackets.MethaloxStage, "Methalox", true) { } }
+    class MethaneAirProvider : GenericResourceProvider { public MethaneAirProvider() : base(OutboundPackets.MethaneAir, "MethaneAir", false) { } }
+    class MethaneAirStageProvider : GenericResourceProvider { public MethaneAirStageProvider() : base(OutboundPackets.MethaneAirStage, "MethaneAir", true) { } }
+    class UraniumProvider : GenericResourceProvider { public UraniumProvider() : base(OutboundPackets.Uranium, "Uranium", false) { } }
     class ElectricChargeProvider : GenericResourceProvider { public ElectricChargeProvider() : base(OutboundPackets.ElectricCharge, "ElectricCharge", false) { } }
     class XenonGasProvider : GenericResourceProvider { public XenonGasProvider() : base(OutboundPackets.XenonGas, "Xenon", false) { } }
     class XenonGasStageProvider : GenericResourceProvider { public XenonGasStageProvider() : base(OutboundPackets.XenonGasStage, "Xenon", true) { } }
-    //TODO class XenonECProvider : GenericResourceProvider { public XenonECProvider() : base(OutboundPackets.XenonEC, "XenonEC", false) { } }
-    //TODO class XenonECStageProvider : GenericResourceProvider { public XenonECStageProvider() : base(OutboundPackets.XenonECStage, "XenonEC", true) { } }
+    class XenonECProvider : GenericResourceProvider { public XenonECProvider() : base(OutboundPackets.XenonEC, "XenonEC", false) { } }
+    class XenonECStageProvider : GenericResourceProvider { public XenonECStageProvider() : base(OutboundPackets.XenonECStage, "XenonEC", true) { } }
     class AblatorProvider : GenericResourceProvider { public AblatorProvider() : base(OutboundPackets.Ablator, "Ablator", false) { } }
     class AblatorStageProvider : GenericResourceProvider { public AblatorStageProvider() : base(OutboundPackets.AblatorStage, "Ablator", true) { } }
 
-    //doesn't exist any more: class OreProvider : GenericResourceProvider { public OreProvider() : base(OutboundPackets.Ore, "Ore", false) { } }
+    //doesn't exist any more in KSP2: class OreProvider : GenericResourceProvider { public OreProvider() : base(OutboundPackets.Ore, "Ore", false) { } }
 }
