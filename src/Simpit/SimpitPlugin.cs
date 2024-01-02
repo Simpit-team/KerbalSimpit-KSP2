@@ -12,7 +12,6 @@ using Simpit.Providers;
 using SpaceWarp.API.Logging;
 using Simpit.External;
 
-//TODO Replace all Debug.Log with SimpitPlugin.Instance.Logger.LogInfo and remove the "Simpit : " in front of it
 //TODO FlightProvider.cs: Add the crew count
 //TODO FlightProvider.cs: Add the signal strength. Is there something like that in KSP2?
 //TODO FlightProvider.cs: Add the currentStage. Is there something like that in KSP2?

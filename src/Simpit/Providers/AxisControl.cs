@@ -328,7 +328,7 @@ namespace Simpit.Providers
                 }
                 else
                 {
-                    Debug.Log("Simpit : KerbalSimpitAxisController is not found");
+                    SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
                 }
 
                 return false;
@@ -356,7 +356,7 @@ namespace Simpit.Providers
                 }
                 else
                 {
-                    Debug.Log("Simpit : KerbalSimpitAxisController is not found");
+                    SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
                 }
 
                 return false;
@@ -383,7 +383,7 @@ namespace Simpit.Providers
                 }
                 else
                 {
-                    Debug.Log("Simpit : KerbalSimpitAxisController is not found");
+                    SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
                 }
 
                 return false;
@@ -409,7 +409,7 @@ namespace Simpit.Providers
                 }
                 else
                 {
-                    Debug.Log("Simpit : KerbalSimpitAxisController is not found");
+                    SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
                 }
 
                 return false;

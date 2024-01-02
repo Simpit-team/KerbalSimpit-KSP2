@@ -4,6 +4,7 @@ using KSP.Sim.impl;
 using KSP.Sim.ResourceSystem;
 using KSP.UI.Binding;
 using Simpit.Providers;
+using Simpit.Utilities;
 using SpaceWarp.API.Assets;
 using SpaceWarp.API.Game;
 using SpaceWarp.API.UI;
@@ -139,10 +140,8 @@ namespace Simpit
 
         static void OnDebugButtonPress()
         {
-            //KerbalSimpitUtils.PrintAllAvailableResources();
+            KerbalSimpitUtils.PrintAllAvailableResources();
             SimpitPlugin.Instance.Logger.LogDebug("DebugButtonPress");
-
-            
         }
 
         public static void SetDebugText(string text)

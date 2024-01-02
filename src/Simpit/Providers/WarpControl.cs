@@ -61,13 +61,13 @@ namespace Simpit.Providers
             }
             else
             {
-                Debug.Log("Simpit : Cannot find a warp speed at index: " + rateIndex);
+                SimpitPlugin.Instance.Logger.LogInfo("Cannot find a warp speed at index: " + rateIndex);
             }
         }
 
         public void ProcessWarpCommand(byte command)
         {
-            if (SimpitPlugin.Instance.config_verbose) Debug.Log("Simpit : receveid TW command " + command);
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("receveid TW command " + command);
             //UniverseDataProvider udp = GameManager.Instance.Game.ViewController.DataProvider.UniverseDataProvider;
             //int currentRate = udp.GetTimeRateIndex();
             TimeWarp tw = GameManager.Instance.Game.ViewController.TimeWarp;
@@ -116,7 +116,7 @@ namespace Simpit.Providers
                     }
                     else
                     {
-                        Debug.Log("Simpit : Already at max warp rate.");
+                        SimpitPlugin.Instance.Logger.LogInfo("Already at max warp rate.");
                     }
                     */
                     break;
@@ -129,7 +129,7 @@ namespace Simpit.Providers
                     }
                     else
                     {
-                        Debug.Log("Simpit : Already at min warp rate.");
+                        SimpitPlugin.Instance.Logger.LogInfo("Already at min warp rate.");
                     }
                     */
                     break;
@@ -140,7 +140,7 @@ namespace Simpit.Providers
                     //KSP1 TimeWarp.SetRate(0, USE_INSTANT_WARP, DISPLAY_MESSAGE);
                     break;
                 default:
-                    Debug.Log("Simpit : received an unrecognized Warp control command : " + command + ". Ignoring it.");
+                    SimpitPlugin.Instance.Logger.LogInfo("received an unrecognized Warp control command : " + command + ". Ignoring it.");
                     break;
             }
         }
@@ -171,7 +171,7 @@ namespace Simpit.Providers
                     }
                     else
                     {
-                        Debug.Log("Simpit : There is no maneuver to warp to.");
+                        SimpitPlugin.Instance.Logger.LogInfo("There is no maneuver to warp to.");
                     }
                     break;
                 case TimewarpToValues.timewarpToNextSOI:
@@ -184,7 +184,7 @@ namespace Simpit.Providers
                     }
                     else
                     {
-                        Debug.Log("Simpit : There is no SOI change to warp to. Orbit type : " + orbitType);
+                        SimpitPlugin.Instance.Logger.LogInfo("There is no SOI change to warp to. Orbit type : " + orbitType);
                     }
                     break;
                 case TimewarpToValues.timewarpToApoapsis:
@@ -192,7 +192,7 @@ namespace Simpit.Providers
                     if (Double.IsNaN(timeToApoapsis) || Double.IsInfinity(timeToApoapsis))
                     {
                         //This can happen in an escape trajectory for instance
-                        Debug.Log("Simpit : Cannot TW to apoasis since there is no apoapsis");
+                        SimpitPlugin.Instance.Logger.LogInfo("Cannot TW to apoasis since there is no apoapsis");
                     }
                     else
                     {
@@ -204,7 +204,7 @@ namespace Simpit.Providers
                     if (Double.IsNaN(timeToPeriapsis) || Double.IsInfinity(timeToPeriapsis))
                     {
                         //Can this happen ?
-                        Debug.Log("Simpit : Cannot TW to periapsis since there is no periapsis");
+                        SimpitPlugin.Instance.Logger.LogInfo("Cannot TW to periapsis since there is no periapsis");
                     }
                     else
                     {
@@ -222,24 +222,24 @@ namespace Simpit.Providers
                     }
                     else
                     {
-                        Debug.Log("SimPit : Cannot warp to next morning if not landed or splashed");
+                        SimpitPlugin.Instance.Logger.LogInfo("Cannot warp to next morning if not landed or splashed");
                     }
                     break;
                 default:
-                    Debug.Log("Simpit : received an unrecognized WarpTO command : " + command + ". Ignoring it.");
+                    SimpitPlugin.Instance.Logger.LogInfo("received an unrecognized WarpTO command : " + command + ". Ignoring it.");
                     break;
             }
 
             timeToWarp = timeToWarp + command.delay;
-            if (SimpitPlugin.Instance.config_verbose) Debug.Log("Simpit: TW to UT " + timeToWarp + ". Which is " + (timeToWarp - ut) + "s away");
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("TW to UT " + timeToWarp + ". Which is " + (timeToWarp - ut) + "s away");
 
             if (timeToWarp < 0)
             {
-                Debug.Log("Simpit : cannot compute the time to timewarp to. Ignoring TW command " + command);
+                SimpitPlugin.Instance.Logger.LogInfo("cannot compute the time to timewarp to. Ignoring TW command " + command);
             }
             else if (timeToWarp < ut)
             {
-                Debug.Log("Simpit : cannot warp in the past. Ignoring TW command " + command);
+                SimpitPlugin.Instance.Logger.LogInfo("cannot warp in the past. Ignoring TW command " + command);
             }
             else
             {

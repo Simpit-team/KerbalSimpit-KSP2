@@ -80,7 +80,7 @@ namespace Simpit.Providers
 
         public void EchoReplyCallback(byte ID, object Data)
         {
-            Debug.Log(String.Format("Echo reply received on port {0}.", ID));
+            SimpitPlugin.Instance.Logger.LogInfo(String.Format("Echo reply received on port {0}.", ID));
         }
 
         public void CustomLogCallback(byte ID, object Data)

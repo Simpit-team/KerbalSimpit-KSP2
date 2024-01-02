@@ -24,12 +24,20 @@ namespace Simpit.Utilities
 
         public static void PrintAllAvailableResources()
         {
-            ResourceDefinitionDatabase resourceDatabase = GameManager.Instance.Game.ResourceDefinitionDatabase;
-            Dictionary<ResourceDefinitionID, double> resources = new Dictionary<ResourceDefinitionID, double>();
-            foreach (ResourceDefinitionID resourceId in resourceDatabase.GetAllResourceIDs())
+            try
             {
-                SimpitPlugin.Instance.Logger.LogInfo(String.Format("Found resource \"{0}\" with ID \"{1}\"", resourceDatabase.GetDefinitionData(resourceId).name, resourceId));
+                ResourceDefinitionDatabase resourceDatabase = GameManager.Instance.Game.ResourceDefinitionDatabase;
+                if (!resourceDatabase.IsDefinitionDataFrozen)
+                {
+                    SimpitPlugin.Instance.Logger.LogDebug("The resource database isn't ready yet. Try again later.");
+                    return;
+                }
+                foreach (ResourceDefinitionID resourceId in resourceDatabase.GetAllResourceIDs())
+                {
+                    SimpitPlugin.Instance.Logger.LogDebug("Registering resource \"" + resourceDatabase.GetResourceNameFromID(resourceId) + "\" with id \"" + resourceId + "\".");
+                }
             }
+            catch { }
         }
     }
 }

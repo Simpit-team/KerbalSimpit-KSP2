@@ -79,7 +79,7 @@ namespace Simpit.Providers
         public void Start()
         {
             //AGXPresent = AGXInstalled();
-            //if (SimpitPlugin.Instance.config_verbose) Debug.Log(String.Format("KerbalSimpit: ActionGroupsExtended installed: {0}", AGXPresent));
+            //if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo(String.Format("KerbalSimpit: ActionGroupsExtended installed: {0}", AGXPresent));
 
             enableChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + InboundPackets.CAGEnable);
             if (enableChannel != null) enableChannel.Add(enableCAGCallback);
@@ -109,7 +109,7 @@ namespace Simpit.Providers
                 resendState = false;
                 if (CAGStateChannel != null)
                 {
-                    //Debug.Log(String.Format("Sending CAG status : (" + newState.status[0] + ") (" + newState.status[1] + ") "));
+                    //SimpitPlugin.Instance.Logger.LogInfo(String.Format("Sending CAG status : (" + newState.status[0] + ") (" + newState.status[1] + ") "));
                     CAGStateChannel.Fire(OutboundPackets.CustomActionGroups, newState);
                     lastCAGStatus = newState;
                 }
