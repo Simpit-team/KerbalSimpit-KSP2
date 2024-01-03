@@ -16,6 +16,7 @@ using Simpit.External;
 //TODO Support multiple serial ports
 //TODO Automatically open port on game start
 //TODO Add a Science Collection feature + info when science gets available 
+//TODO CameraControl
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
