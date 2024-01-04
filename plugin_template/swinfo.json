@@ -6,10 +6,10 @@
   "description": "Provides a serial connection interface for custom controllers.",
   "source": "",
   "version": "0.0.8",
-  "version_check": "",
+  "version_check": "https://raw.githubusercontent.com/Simpit-team/KerbalSimpit-KSP2/main/plugin_template/swinfo.json",
   "ksp2_version": {
-    "min": "0.1.5",
-    "max": "*"
+    "min": "0.2.0",
+    "max": "0.2.0"
   },
   "dependencies": [
     {
@@ -21,3 +21,4 @@
     }
   ]
 }
+	
