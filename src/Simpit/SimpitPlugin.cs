@@ -20,19 +20,21 @@ using Simpit.External;
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
-//TODO AxisControl.cs : Test the outbound messages. The CommandProviders probably have to be added somewhere
+//TODO AxisControl.cs : Test the outbound messages. The CommandProviders probably have to be added somewhere?
 //TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
 //TODO FlightProvider.cs: For FlightStatusBits.isInFlight was HighLogic.LoadedSceneIsFlight used which is deprecated. Test if simVessel.IsVesselInFlight() also works
 //TODO FlightProvider.cs: Does the crew count work correctly?
 //TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly.
 //TODO Telemetry.cs : Please check/test especially airspeed, maneuverData, rotationData 
-//TODO WarpControl.cs : Please check/test especially setting a specific warp level, timewarp to Ap/Pe/SOI change/Next morining
 //TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
 //TODO TargetInfo.cs: Test the TargetProvider
 //TODO Does the scene change notification stuff work?
 //TODO FlightProvider.cs: Get a better CommNet signal strength. Is there something like that in KSP2? Can it be calculated by antennas and distance?
 
-//TODO Arduino lib: add a flag for KSP version which is sent in Handshake
+//TODO WarpControl.cs : Timewarp to PE goes past the Pe if Pe is in another SOI (e.g. going to the mun)
+//TODO WarpControl.cs : warp levels are different between KSP2 and KSP1 how to handle that?
+//TODO WarpControl.cs : timewarp to Next morining doesn't work
+
 //TODO Arduino lib - Resources.cs : Implement other resources: OutboundPackets 52 to 62
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
 //TODO For the Action groups there is now the state "mixed", e.g. if only some lights are on, others are off. Should the mixed state be counted as on or off? Or is there a possibility to also send the mixed state?
