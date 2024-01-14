@@ -261,6 +261,8 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<KerbalSimpitWarpControl>();
         providers.AddComponent<KerbalSimpitNavBallProvider>();
         providers.AddComponent<FlightStatusProvider>();
+        providers.AddComponent<VesselNameProvider>();
+        providers.AddComponent<SOINameProvider>();
         providers.AddComponent<KerbalSimpitCAGProvider>();
         providers.AddComponent<KeyboardEmulator>();
 

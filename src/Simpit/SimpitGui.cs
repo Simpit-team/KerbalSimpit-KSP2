@@ -24,7 +24,7 @@ namespace Simpit
         private const string ToolbarOabButtonID = "BTN-SimpitOAB";
         private const string ToolbarKscButtonID = "BTN-SimpitKSC";
 
-        static string debugText = "Show stuff here with SimpitGui.SetDebugText()";
+        static string debugText = "Show stuff here with mySimpit.printToKSP(\"WhatIWantToPrint\")";
         static int debugTextChangeCounter = 0;
 
         public void InitGui()
