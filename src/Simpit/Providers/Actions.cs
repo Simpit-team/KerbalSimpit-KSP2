@@ -126,47 +126,47 @@ namespace Simpit.Providers
 
             if ((groups & ActionGroupBits.StageBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating stage");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating stage");
                 currentVessel.SetStage(true);
             }
             if ((groups & ActionGroupBits.GearBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating gear");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating gear");
                 //currentVessel.SetGroup(KSPActionGroup.Gear, true); //This sets the Gear state, but it can't be read. Probably a KSP2 bug. Use VesselComponent.SetActionGroup() instead
                 simVessel.SetActionGroup(KSPActionGroup.Gear, true);
             }
             if ((groups & ActionGroupBits.LightBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating light");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating light");
                 simVessel.SetActionGroup(KSPActionGroup.Lights, true);
             }
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating RCS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating RCS");
                 //simVessel.SetActionGroup(KSPActionGroup.RCS, true);
                 simVessel.SetRCSEnabled(true);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating SAS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating SAS");
                 simVessel.SetAutopilotEnableDisable(true);
                 //simVessel.SetActionGroup(KSPActionGroup.SAS, true);
             }
             if ((groups & ActionGroupBits.BrakesBit) != 0)
             {
                 //Wheel brakes only gets set in VesselVehicle.SetGroup and not in VesselComponent like all the other action groups
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating brakes");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating brakes");
                 currentVessel.SetGroup(KSPActionGroup.Brakes, true);
             }
             if ((groups & ActionGroupBits.AbortBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating abort");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating abort");
                 simVessel.SetActionGroup(KSPActionGroup.Abort, true);
             }
             /* Moved to single action group message
             if ((groups & ActionGroupBits.SolarPanelsBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Activating solar panels");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating solar panels");
                 simVessel.SetActionGroup(KSPActionGroup.SolarPanels, true);
             }
             */
@@ -186,47 +186,47 @@ namespace Simpit.Providers
 
             if ((groups & ActionGroupBits.StageBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating stage");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating stage");
                 currentVessel.SetStage(false);
             }
             if ((groups & ActionGroupBits.GearBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating gear");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating gear");
                 //currentVessel.SetGroup(KSPActionGroup.Gear, false);
                 simVessel.SetActionGroup(KSPActionGroup.Gear, false);
             }
             if ((groups & ActionGroupBits.LightBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating light");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating light");
                 simVessel.SetActionGroup(KSPActionGroup.Lights, false);
             }
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating RCS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating RCS");
                 //simVessel.SetActionGroup(KSPActionGroup.RCS, false);
                 simVessel.SetRCSEnabled(false);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating SAS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating SAS");
                 simVessel.SetAutopilotEnableDisable(false);
                 //simVessel.SetActionGroup(KSPActionGroup.SAS, false);
             }
             if ((groups & ActionGroupBits.BrakesBit) != 0)
             {
                 //Wheel brakes only gets set in VesselVehicle.SetGroup and not in VesselComponent like all the other action groups
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating brakes");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating brakes");
                 currentVessel.SetGroup(KSPActionGroup.Brakes, false);
             }
             if ((groups & ActionGroupBits.AbortBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating abort");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating abort");
                 simVessel.SetActionGroup(KSPActionGroup.Abort, false);
             }
             /* Moved to single action group message
             if ((groups & ActionGroupBits.SolarPanelsBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Deactivating solar panels");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating solar panels");
                 simVessel.SetActionGroup(KSPActionGroup.SolarPanels, false);
             }
             */
@@ -246,48 +246,48 @@ namespace Simpit.Providers
 
             if ((groups & ActionGroupBits.StageBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling (activating) stage");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling (activating) stage");
                 currentVessel.SetStage(true);
             }
             if ((groups & ActionGroupBits.GearBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling gear");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling gear");
                 simVessel.TriggerActionGroup(KSPActionGroup.Gear);
                 //currentVessel.TriggerGroup(KSPActionGroup.Gear);
             }
             if ((groups & ActionGroupBits.LightBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling light");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling light");
                 simVessel.TriggerActionGroup(KSPActionGroup.Lights);
             }
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling RCS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling RCS");
                 //simVessel.SetActionGroup(KSPActionGroup.RCS, simVessel.GetActionGroupState(KSPActionGroup.RCS) == KSPActionGroupState.False);
                 //simVessel.TriggerActionGroup(KSPActionGroup.RCS);
                 simVessel.SetRCSEnabled(!simVessel.IsRCSEnabled);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling SAS");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling SAS");
                 simVessel.SetAutopilotEnableDisable(!simVessel.AutopilotStatus.IsEnabled);
                 //simVessel.TriggerActionGroup(KSPActionGroup.SAS);
             }
             if ((groups & ActionGroupBits.BrakesBit) != 0)
             {
                 //Wheel brakes only gets set in VesselVehicle.SetGroup and not in VesselComponent like all the other action groups
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling brakes");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling brakes");
                 currentVessel.TriggerGroup(KSPActionGroup.Brakes);
             }
             if ((groups & ActionGroupBits.AbortBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling abort");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling abort");
                 simVessel.TriggerActionGroup(KSPActionGroup.Abort);
             }
             /* Moved to single action group message
             if ((groups & ActionGroupBits.SolarPanelsBit) != 0)
             {
-                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo("Toggling solar panels");
+                if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling solar panels");
                 simVessel.TriggerActionGroup(KSPActionGroup.SolarPanels);
             }
             */

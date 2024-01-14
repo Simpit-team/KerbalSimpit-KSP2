@@ -52,7 +52,7 @@ namespace Simpit.Providers
                     ResourceDefinitionData resource = resourceDatabase.GetDefinitionData(resourceDatabase.GetResourceIDFromName(_resourceName));
                     _resourceID = resource.resourceDatabaseID;
 
-                    SimpitPlugin.Instance.Logger.LogDebug("Registering resource \"" + _resourceName + "\" with id \"" + _resourceID + "\".");
+                    SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Registering resource \"" + _resourceName + "\" with id \"" + _resourceID + "\".");
                 } 
                 catch 
                 {
@@ -77,7 +77,7 @@ namespace Simpit.Providers
             /*
             string stageOrShip = "ship";
             if (_stageOnly) stageOrShip = "stage";
-            SimpitPlugin.Instance.Logger.LogDebug(String.Format("Resource in {3}: \"{0}\" with \"{1}\" StoredUnits in \"{2}\" CapacityUnits.",
+            SimpitPlugin.Instance.loggingQueueDebug.Enqueue(String.Format("Resource in {3}: \"{0}\" with \"{1}\" StoredUnits in \"{2}\" CapacityUnits.",
                 GameManager.Instance.Game.ResourceDefinitionDatabase.GetResourceNameFromID(_resourceID),
                 containedResource.StoredUnits,
                 containedResource.CapacityUnits,

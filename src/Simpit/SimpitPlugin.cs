@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using Simpit.Providers;
 using SpaceWarp.API.Logging;
 using Simpit.External;
+using System.Collections.Concurrent;
 
 
 //TODO Support multiple serial ports
@@ -58,7 +59,11 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
     // Singleton instance of the plugin class
     [PublicAPI] public static SimpitPlugin Instance { get; set; }
-    internal new SpaceWarp.API.Logging.ILogger Logger = new UnityLogSource(ModName);
+    //internal new SpaceWarp.API.Logging.ILogger Logger = new UnityLogSource(ModName);
+    public ConcurrentQueue<string> loggingQueueInfo = new ConcurrentQueue<string>();
+    public ConcurrentQueue<string> loggingQueueDebug = new ConcurrentQueue<string>();
+    public ConcurrentQueue<string> loggingQueueWarning = new ConcurrentQueue<string>();
+    public ConcurrentQueue<string> loggingQueueError = new ConcurrentQueue<string>();
     SimpitGui gui = new SimpitGui();
 
     public bool config_verbose;
@@ -461,6 +466,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
         if (channelID == 0)
         {
+            if (config_verbose) Logger.LogInfo(String.Format("Request resending all channels"));
             foreach (byte packetID in port.getPacketSubscriptionList())
             {
                 onSerialChannelForceSendArray[packetID].Fire(packetID, null);
@@ -468,6 +474,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         }
         else
         {
+            if (config_verbose) Logger.LogInfo(String.Format("Request resending on channel {0}", channelID));
             onSerialChannelForceSendArray[channelID].Fire(channelID, null);
         }
     }

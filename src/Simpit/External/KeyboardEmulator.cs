@@ -64,17 +64,17 @@ namespace Simpit.External
 
                     if ((payload.modifier & KeyboardEmulatorModifier.KEY_DOWN_MOD) != 0)
                     {
-                        SimpitPlugin.Instance.Logger.LogInfo("Simpit emulates key down of " + key);
+                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Simpit emulates key down of " + key);
                         input.Keyboard.KeyDown(key);
                     }
                     else if ((payload.modifier & KeyboardEmulatorModifier.KEY_UP_MOD) != 0)
                     {
-                        SimpitPlugin.Instance.Logger.LogInfo("Simpit emulates key up of " + key);
+                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Simpit emulates key up of " + key);
                         input.Keyboard.KeyUp(key);
                     }
                     else
                     {
-                        SimpitPlugin.Instance.Logger.LogInfo("Simpit emulates keypress of " + key);
+                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Simpit emulates keypress of " + key);
                         input.Keyboard.KeyPress(key);
                     }
 
@@ -95,17 +95,17 @@ namespace Simpit.External
                 }
                 else
                 {
-                    SimpitPlugin.Instance.Logger.LogInfo("I received a message to emulate a keypress of key " + payload.key + " but I do not recognize it. I ignore it.");
+                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue("I received a message to emulate a keypress of key " + payload.key + " but I do not recognize it. I ignore it.");
                 }
 
             }
             catch (DllNotFoundException exception)
             {
-                SimpitPlugin.Instance.Logger.LogWarning("I received a message to emulate a keypress. This is currently only available on Windows. I ignore it.");
+                SimpitPlugin.Instance.loggingQueueWarning.Enqueue("I received a message to emulate a keypress. This is currently only available on Windows. I ignore it.");
                 if (SimpitPlugin.Instance.config_verbose)
                 {
-                    SimpitPlugin.Instance.Logger.LogWarning(exception.Message);
-                    SimpitPlugin.Instance.Logger.LogWarning(exception.ToString());
+                    SimpitPlugin.Instance.loggingQueueWarning.Enqueue(exception.Message);
+                    SimpitPlugin.Instance.loggingQueueWarning.Enqueue(exception.ToString());
                 }
             }
 

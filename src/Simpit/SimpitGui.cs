@@ -141,7 +141,7 @@ namespace Simpit
         static void OnDebugButtonPress()
         {
             KerbalSimpitUtils.PrintAllAvailableResources();
-            SimpitPlugin.Instance.Logger.LogDebug("DebugButtonPress");
+            SimpitPlugin.Instance.loggingQueueDebug.Enqueue("DebugButtonPress");
         }
 
         public static void SetDebugText(string text)

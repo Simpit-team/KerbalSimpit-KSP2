@@ -60,6 +60,31 @@ namespace Simpit.Providers
                 notificationQueue.TryDequeue(out notification);
                 GameManager.Instance.Game.Notifications.ProcessNotification(notification);
             }
+
+            while (!SimpitPlugin.Instance.loggingQueueInfo.IsEmpty)
+            {
+                string log;
+                SimpitPlugin.Instance.loggingQueueInfo.TryDequeue(out log);
+                SimpitPlugin.Instance.SWLogger.LogInfo(log);
+            }
+            while (!SimpitPlugin.Instance.loggingQueueDebug.IsEmpty)
+            {
+                string log;
+                SimpitPlugin.Instance.loggingQueueDebug.TryDequeue(out log);
+                SimpitPlugin.Instance.SWLogger.LogDebug(log);
+            }
+            while (!SimpitPlugin.Instance.loggingQueueWarning.IsEmpty)
+            {
+                string log;
+                SimpitPlugin.Instance.loggingQueueWarning.TryDequeue(out log);
+                SimpitPlugin.Instance.SWLogger.LogWarning(log);
+            }
+            while (!SimpitPlugin.Instance.loggingQueueError.IsEmpty)
+            {
+                string log;
+                SimpitPlugin.Instance.loggingQueueError.TryDequeue(out log);
+                SimpitPlugin.Instance.SWLogger.LogError(log);
+            }
         }
 
         public void OnDestroy()
@@ -74,13 +99,13 @@ namespace Simpit.Providers
 
         public void EchoRequestCallback(byte ID, object Data)
         {
-            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo(String.Format("Echo request on port {0}. Replying.", ID));
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo request on port {0}. Replying.", ID));
             SimpitPlugin.Instance.port.sendPacket(CommonPackets.EchoResponse, Data);
         }
 
         public void EchoReplyCallback(byte ID, object Data)
         {
-            SimpitPlugin.Instance.Logger.LogInfo(String.Format("Echo reply received on port {0}.", ID));
+            SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo reply received on port {0}.", ID));
         }
 
         public void CustomLogCallback(byte ID, object Data)
@@ -108,7 +133,7 @@ namespace Simpit.Providers
             
             if ((logStatus & CustomLogBits.Verbose) == 0 || SimpitPlugin.Instance.config_verbose)
             {
-                SimpitPlugin.Instance.Logger.LogInfo(message);
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(message);
             }
         }
 

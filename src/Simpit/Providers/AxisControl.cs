@@ -212,7 +212,7 @@ namespace Simpit.Providers
 
             if (autopilot == null)
             {
-                SimpitPlugin.Instance.Logger.LogInfo("Ignoring a SAS MODE Message since I could not find the autopilot");
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Ignoring a SAS MODE Message since I could not find the autopilot");
                 return;
             }
 
@@ -223,13 +223,13 @@ namespace Simpit.Providers
                 autopilot.SetMode(mySASMode);
                 if (SimpitPlugin.Instance.config_verbose) 
                 {
-                    SimpitPlugin.Instance.Logger.LogInfo(String.Format("payload is {0}", mySASMode));
-                    SimpitPlugin.Instance.Logger.LogInfo(String.Format("SAS mode is {0}", autopilot._mode.ToString()));
+                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("payload is {0}", mySASMode));
+                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("SAS mode is {0}", autopilot._mode.ToString()));
                 }
             }
             else
             {
-                SimpitPlugin.Instance.Logger.LogInfo(String.Format("Unable to set SAS mode to {0}", mySASMode.ToString()));
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Unable to set SAS mode to {0}", mySASMode.ToString()));
             }
         }
 
@@ -329,7 +329,7 @@ namespace Simpit.Providers
             }
             else
             {
-                SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("KerbalSimpitAxisController is not found");
             }
 
             return false;
@@ -357,7 +357,7 @@ namespace Simpit.Providers
             }
             else
             {
-                SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("KerbalSimpitAxisController is not found");
             }
 
             return false;
@@ -384,7 +384,7 @@ namespace Simpit.Providers
             }
             else
             {
-                SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("KerbalSimpitAxisController is not found");
             }
 
             return false;
@@ -410,7 +410,7 @@ namespace Simpit.Providers
             }
             else
             {
-                SimpitPlugin.Instance.Logger.LogInfo("KerbalSimpitAxisController is not found");
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("KerbalSimpitAxisController is not found");
             }
 
             return false;

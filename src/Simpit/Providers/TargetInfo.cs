@@ -94,9 +94,9 @@ namespace Simpit.Providers
             {
                 // Several issues where caused when a target was not set or when switching vessels and some data is set but not all data needed.
                 // This catch prevent the provider from stopping to work, but we should investigate if it is still triggered somehow
-                SimpitPlugin.Instance.Logger.LogInfo("Exception raised in TargetProvider");
-                SimpitPlugin.Instance.Logger.LogInfo(e.Message);
-                SimpitPlugin.Instance.Logger.LogInfo(e.StackTrace);
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Exception raised in TargetProvider");
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(e.Message);
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(e.StackTrace);
             }
         }
     }
