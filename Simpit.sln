@@ -4,6 +4,8 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{0D848141-4620-47B2-AF57-02BF768348DB}") = "Simpit", "src\Simpit\Simpit.csproj", "{3CB59FD8-9616-403F-9935-36F40342CDD1}"
 EndProject
+Project("{0D848141-4620-47B2-AF57-02BF768348DB}") = "Simpit.Unity", "src\Simpit.Unity\Simpit.Unity.csproj", "{62BE331A-4B27-44EA-8C4F-322C80CA800C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,14 @@ Global
 		{3CB59FD8-9616-403F-9935-36F40342CDD1}.DeployAndRun|Any CPU.Build.0 = DeployAndRun|Any CPU
 		{3CB59FD8-9616-403F-9935-36F40342CDD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3CB59FD8-9616-403F-9935-36F40342CDD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.Deploy|Any CPU.ActiveCfg = Deploy|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.Deploy|Any CPU.Build.0 = Deploy|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.DeployAndRun|Any CPU.ActiveCfg = DeployAndRun|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.DeployAndRun|Any CPU.Build.0 = DeployAndRun|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62BE331A-4B27-44EA-8C4F-322C80CA800C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

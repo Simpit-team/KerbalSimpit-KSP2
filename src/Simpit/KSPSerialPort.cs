@@ -2,6 +2,7 @@
 
 using System.IO.Ports;
 using Simpit;
+using Simpit.UI;
 
 namespace KerbalSimpit.Serial
 {
@@ -32,7 +33,19 @@ namespace KerbalSimpit.Serial
             ERROR, // The port could not be openned.
         }
 
-        public ConnectionStatus portStatus;
+        private ConnectionStatus _portStatus;
+        public ConnectionStatus portStatus
+        {
+            get => _portStatus;
+            set
+            {
+                _portStatus = value;
+                if (MainWindowController.Instance != null)
+                {
+                    MainWindowController.Instance.SetConnectionStatus($"{value}".Replace("_", " "));
+                }
+            }
+        }
 
         private readonly object queueLock = new object();
         private Queue<byte[]> packetQueue = new Queue<byte[]>();
@@ -79,17 +92,18 @@ namespace KerbalSimpit.Serial
             SimpitPlugin.Instance.Logger.LogInfo(String.Format("Using serial polling thread for {0}", pn));
         }
 
-        public void ChangePort(string newPortName, int newBaudRate)
+        public bool ChangePort(string newPortName, int newBaudRate)
         {
             if (Port.IsOpen)
             {
                 SimpitPlugin.Instance.Logger.LogWarning(String.Format("Can't change port because port {0} is already open", Port.PortName));
-                return;
+                return false;
             }
             PortName = newPortName;
             BaudRate = newBaudRate;
             Port.PortName = newPortName;
             Port.BaudRate = newBaudRate;
+            return true;
         }
 
         // Open the serial port
@@ -145,14 +159,14 @@ namespace KerbalSimpit.Serial
             if (Port.IsOpen)
             {
                 SimpitPlugin.Instance.Logger.LogInfo(String.Format("Closing port {0}.", PortName));
-                portStatus = KSPSerialPort.ConnectionStatus.CLOSED;
+                portStatus = ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
                 Port.Close();
             } else if(portStatus == KSPSerialPort.ConnectionStatus.ERROR)
             {
                 SimpitPlugin.Instance.Logger.LogInfo(String.Format("Closing port {0} after error.", PortName));
-                portStatus = KSPSerialPort.ConnectionStatus.CLOSED;
+                portStatus = ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
                 Port.Close();
@@ -178,7 +192,7 @@ namespace KerbalSimpit.Serial
             }
             finally
             {
-                portStatus = KSPSerialPort.ConnectionStatus.ERROR;
+                portStatus = ConnectionStatus.ERROR;
             }
         }
 
