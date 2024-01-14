@@ -268,7 +268,7 @@ namespace Simpit.Providers
             if (rotationChannel != null) rotationChannel.Fire(OutboundPackets.RotationData, myRotation);
         }
 
-            public void OrbitInfoProvider()
+        public void OrbitInfoProvider()
         {
             VesselComponent simVessel = null;
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }

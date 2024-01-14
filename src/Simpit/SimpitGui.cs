@@ -147,7 +147,7 @@ namespace Simpit
         public static void SetDebugText(string text)
         {
             debugTextChangeCounter++;
-            debugTextChangeCounter %= 100;
+            debugTextChangeCounter %= 1000;
             debugText = String.Format("{0:000} {1}", debugTextChangeCounter, text);
         }
     }

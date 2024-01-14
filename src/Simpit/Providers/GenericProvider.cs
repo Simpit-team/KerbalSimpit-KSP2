@@ -39,7 +39,7 @@ namespace Simpit.Providers
      * 
      * MsgType should have the following attributes : [StructLayout(LayoutKind.Sequential, Pack = 1)] [Serializable]
      */
-    abstract class GenericProvider<MsgType> : MonoBehaviour
+    public abstract class GenericProvider<MsgType> : MonoBehaviour
     {
         private bool _msgToSend; // True if the current message should be send at the next possible occasion
         private bool _forceSending; // True if the next message should be sent without any check (for instance the first message after a new subscription).

@@ -15,40 +15,33 @@ using Simpit.External;
 
 //TODO Support multiple serial ports
 //TODO Automatically open port on game start
+//TODO Changing Serial Port without restarting KSP2 lets you connect, but the actual Messages don't go through?!?
+
+//TODO Arduino lib - Resources.cs : Implement other resources: OutboundPackets 52 to 62
+//TODO Two more new messages for action groups: SetSingleActionGroup and FeedbackValue (On, Off, Mixed)
+//      inbound: 6 bits for addr of action group 2 bits for on,off,toggle
+//      outbound: 2 bits for state on,off,mixed,notAvailable for each of the action groups
+//      on all three sides (Arduino, KSP1, KSP2)
 //TODO Add a Science Collection feature + info when science gets available 
 //TODO CameraControl
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
-//TODO AxisControl.cs : Test the outbound messages. The CommandProviders probably have to be added somewhere?
-//TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
-//TODO FlightProvider.cs: For FlightStatusBits.isInFlight was HighLogic.LoadedSceneIsFlight used which is deprecated. Test if simVessel.IsVesselInFlight() also works
-//TODO FlightProvider.cs: Does the crew count work correctly?
-//TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly.
-//TODO Telemetry.cs : Please check/test especially airspeed, maneuverData, rotationData 
 //TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
-//TODO TargetInfo.cs: Test the TargetProvider
-//TODO Does the scene change notification stuff work?
+
 //TODO FlightProvider.cs: Get a better CommNet signal strength. Is there something like that in KSP2? Can it be calculated by antennas and distance?
 
 //TODO WarpControl.cs : Timewarp to PE goes past the Pe if Pe is in another SOI (e.g. going to the mun)
 //TODO WarpControl.cs : warp levels are different between KSP2 and KSP1 how to handle that?
 //TODO WarpControl.cs : timewarp to Next morining doesn't work
+//TODO Telemetry.cs : maneuverData and rotationData don't work, probably because the angle calculations don't work
+//TODO TargetInfo.cs: Target Heading and Target Pitch and according velocities don't work
+//TODO CoreProvider.cs: Scene switch not detected correctly.
+//TODO Requesting available SAS does not seem to work
+//TODO Requesting FLIGHT_STATUS_MESSAGE does not seem to work
 
-//TODO Arduino lib - Resources.cs : Implement other resources: OutboundPackets 52 to 62
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
-//TODO For the Action groups there is now the state "mixed", e.g. if only some lights are on, others are off. Should the mixed state be counted as on or off? Or is there a possibility to also send the mixed state?
-//TODO FlightProvider.cs: what about the FlightStatusBits.isInAtmoTW? I currently have it sending tw.IsPhysicsTimeWarp
-//TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Which one should we use?
-//TODO FlightProvider.cs: the vesselType (debris, rover, probe, ship, ...) does not seem to exist in KSP2 the closest is the MapItemType.
-//TODO FlightProvider.cs: Test the currentStage. It sends -1
-
-//TODO Two more new messages for action groups: SetSingleActionGroup and FeedbackValue (On, Off, Mixed) on all three sides (Arduino, KSP1, KSP2)
-//Extend define of action groups: 6 bits for addr of action group  2 bits for state on,off,mixed,notAvailable
-//                                                                 2 bits for on,off,toggle
-//Wrapper functions for arduino
-
-//TODO Work on an Arduino side that can test all the features. Should come in handy when I have to update the KSP2 side. Could also come in handy as an example to show how to use all the functions.
+//TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) which is currently in use and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Should the latter be added?
 
 namespace Simpit;
 
@@ -256,7 +249,13 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         providers = new GameObject();
         providers.AddComponent<KerbalSimpitEchoProvider>();
+        
         providers.AddComponent<KerbalSimpitAxisController>();
+        providers.AddComponent<RotationCommandProvider>();
+        providers.AddComponent<TranslationCommandProvider>();
+        providers.AddComponent<WheelCommandProvider>();
+        providers.AddComponent<ThrottleCommandProvider>();
+
         providers.AddComponent<KerbalSimpitActionProvider>();
         providers.AddComponent<KerbalSimpitTelemetryProvider>();
         providers.AddComponent<KerbalSimpitWarpControl>();
