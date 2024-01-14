@@ -38,7 +38,6 @@ using System.Collections.Concurrent;
 //TODO Telemetry.cs : maneuverData and rotationData don't work, probably because the angle calculations don't work
 //TODO TargetInfo.cs: Target Heading and Target Pitch and according velocities don't work
 //TODO CoreProvider.cs: Scene switch not detected correctly.
-//TODO Requesting available SAS does not seem to work
 //TODO Requesting FLIGHT_STATUS_MESSAGE does not seem to work
 
 //TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload

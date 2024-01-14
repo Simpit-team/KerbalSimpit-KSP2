@@ -81,6 +81,7 @@ namespace Simpit.Providers
         */
 
         private SASModeInfoStruct mySASInfo, newSASInfo;
+        private bool _forceSendingSASInfo = false;
 
         private short myThrottle;
         private bool lastThrottleSentIsZero = true;
@@ -109,6 +110,7 @@ namespace Simpit.Providers
             if (AutopilotChannel != null) AutopilotChannel.Add(autopilotModeCallback);
 
             SASInfoChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.SASInfo);
+            GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialChannelForceSend" + OutboundPackets.SASInfo).Add(forceSendingSASInfo);
 
             SimpitPlugin.AddToDeviceHandler(SASInfoProvider);
 
@@ -264,6 +266,11 @@ namespace Simpit.Providers
             //currentVessel.AtomicSet(fcsi);
             //simVessel.ApplyFlightCtrlState(fcsi);
         }
+        
+        public void forceSendingSASInfo(byte ID, object Data)
+        {
+            _forceSendingSASInfo = true;
+        }
 
         public void SASInfoProvider()
         {
@@ -297,13 +304,14 @@ namespace Simpit.Providers
                 }
             }
 
-            if (mySASInfo.currentSASMode != newSASInfo.currentSASMode || mySASInfo.SASModeAvailability != newSASInfo.SASModeAvailability)
+            if (mySASInfo.currentSASMode != newSASInfo.currentSASMode || mySASInfo.SASModeAvailability != newSASInfo.SASModeAvailability || _forceSendingSASInfo)
             {
                 if (SASInfoChannel != null)
                 {
                     mySASInfo = newSASInfo;
                     SASInfoChannel.Fire(OutboundPackets.SASInfo, mySASInfo);
                 }
+                _forceSendingSASInfo = false;
             }
         }
     }
