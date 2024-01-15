@@ -95,6 +95,8 @@
         public static byte ActionGroupActivate = 13;
         public static byte ActionGroupDeactivate = 14;
         public static byte ActionGroupToggle = 15;
+        public static byte SetSingleActionGroup = 58;
+        public static byte SetSingleCAG = 59;
         public static byte VesselRotation = 16;
         public static byte VesselTranslation = 17;
         public static byte WheelControl = 18;
@@ -158,15 +160,23 @@
 
     public static class AdvancedActionGroupIndexes
     {
-        public static byte advancedStageAction = 0;
-        public static byte advancedGearAction = 1;
-        public static byte advancedLightAction = 2;
-        public static byte advancedRcsAction = 3;
-        public static byte advancedSasAction = 4;
-        public static byte advancedBrakesAction = 5;
-        public static byte advancedAbortAction = 6;
-        public static byte advancedSolarAction = 7;
-        public static byte advancedRadiatorAction = 8;
+        public const byte advancedStageAction = 0;
+        public const byte advancedGearAction = 1;
+        public const byte advancedLightAction = 2;
+        public const byte advancedRcsAction = 3;
+        public const byte advancedSasAction = 4;
+        public const byte advancedBrakesAction = 5;
+        public const byte advancedAbortAction = 6;
+        public const byte advancedSolarAction = 7;
+        public const byte advancedRadiatorAction = 8;
+    };
+
+    public static class ActionGroupSettings
+    {
+        public const byte nothing = 0;
+        public const byte activate = 1;
+        public const byte deactivate = 2;
+        public const byte toggle = 3;
     };
 
     public static class WarpControlValues

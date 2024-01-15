@@ -1,8 +1,8 @@
 using KSP.Sim;
 using KSP.Sim.impl;
-using KSP.Sim.State;
 using SpaceWarp.API.Game;
 using SpaceWarp.API.Game.Extensions;
+using System.Collections.Concurrent;
 using UnityEngine;
 
 namespace Simpit.Providers
@@ -11,7 +11,7 @@ namespace Simpit.Providers
     {
         // Inbound messages
         private EventDataObsolete<byte, object> AGActivateChannel, AGDeactivateChannel,
-            AGToggleChannel;
+            AGToggleChannel, AGSetSingleChannel;
 
         // Outbound messages
         private EventDataObsolete<byte, object> AGStateChannel, AdvancedAGStateChannel;
@@ -23,6 +23,9 @@ namespace Simpit.Providers
         // I'm not addressing it now.
         private volatile byte activateBuffer, deactivateBuffer,
             toggleBuffer, currentStateBuffer;
+        //Using a queue here in case the controller rapidly sets multiple action groups in succession
+        //to avoid the buffer being overwritten before it can be applied to the game
+        private volatile ConcurrentQueue<byte> setSingleBuffer;
         private volatile UInt32 currentAdvancedStateBuffer;
 
         // If set to true, the state should be sent at the next update even if no changes
@@ -42,6 +45,8 @@ namespace Simpit.Providers
             if (AGDeactivateChannel != null) AGDeactivateChannel.Add(actionDeactivateCallback);
             AGToggleChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + +InboundPackets.ActionGroupToggle);
             if (AGToggleChannel != null) AGToggleChannel.Add(actionToggleCallback);
+            AGSetSingleChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + +InboundPackets.SetSingleActionGroup);
+            if (AGSetSingleChannel != null) AGSetSingleChannel.Add(actionSetSingleCallback);
 
             AGStateChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.ActionGroups);
             GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialChannelForceSend" + OutboundPackets.ActionGroups).Add(resendActionGroup);
@@ -54,6 +59,7 @@ namespace Simpit.Providers
             if (AGActivateChannel != null) AGActivateChannel.Remove(actionActivateCallback);
             if (AGDeactivateChannel != null) AGDeactivateChannel.Remove(actionDeactivateCallback);
             if (AGToggleChannel != null) AGToggleChannel.Remove(actionToggleCallback);
+            if (AGSetSingleChannel != null) AGSetSingleChannel.Remove(actionSetSingleCallback);
         }
 
         public void resendActionGroup(byte ID, object Data)
@@ -84,6 +90,12 @@ namespace Simpit.Providers
                 toggleBuffer = 0;
             }
 
+            byte actionGroupAndSetting;
+            while (!setSingleBuffer.IsEmpty && setSingleBuffer.TryDequeue(out actionGroupAndSetting))
+            {
+                setSingleGroup(actionGroupAndSetting);
+            }
+
             updateCurrentState();
             updateAdvancedCurrentState();
         }
@@ -104,6 +116,12 @@ namespace Simpit.Providers
         {
             byte[] payload = (byte[])Data;
             toggleBuffer = payload[0];
+        }
+
+        public void actionSetSingleCallback(byte ID, object Data)
+        {
+            byte[] payload = (byte[])Data;
+            setSingleBuffer.Enqueue(payload[0]);
         }
 
         private bool updateCurrentState()
@@ -320,6 +338,94 @@ namespace Simpit.Providers
                 simVessel.TriggerActionGroup(KSPActionGroup.SolarPanels);
             }
             */
+        }
+
+        
+        private void setSingleGroup(byte actionGroupAndSetting)
+        {
+            VesselVehicle currentVessel = null;
+            VesselComponent simVessel = null;
+            try
+            {
+                currentVessel = Vehicle.ActiveVesselVehicle;
+                simVessel = Vehicle.ActiveSimVessel;
+            }
+            catch { }
+            if (currentVessel == null || simVessel == null) return;
+
+            //Bitmask the first six bits as which action group to use and the last two bits as what to do with said action group
+            int actionGroupIndex = (actionGroupAndSetting & 0b11111100) >> 2;
+            byte actionSetting = (byte)(actionGroupAndSetting & 0b00000011);
+
+            bool activate = (actionSetting == ActionGroupSettings.activate);
+            bool deactivate = (actionSetting == ActionGroupSettings.deactivate);
+            bool toggle = (actionSetting == ActionGroupSettings.toggle);
+
+            string debugString;
+            if (activate) debugString = "Activate action group ";
+            else if (deactivate) debugString = "Deactivate action group ";
+            else debugString = "Toggle action group ";
+
+            switch (actionGroupIndex)
+            {
+                case AdvancedActionGroupIndexes.advancedStageAction:
+                    debugString += "stage.";
+                    if (activate || toggle) currentVessel.SetStage(true);
+                    else currentVessel.SetStage(false);
+                    break;
+                case AdvancedActionGroupIndexes.advancedGearAction:
+                    debugString += "gear.";
+                    if (activate) simVessel.SetActionGroup(KSPActionGroup.Gear, true);
+                    else if(deactivate) simVessel.SetActionGroup(KSPActionGroup.Gear, false);
+                    else simVessel.TriggerActionGroup(KSPActionGroup.Gear);
+                    break;
+                case AdvancedActionGroupIndexes.advancedLightAction:
+                    debugString += "lights.";
+                    if (activate) simVessel.SetActionGroup(KSPActionGroup.Lights, true);
+                    else if(deactivate) simVessel.SetActionGroup(KSPActionGroup.Lights, false);
+                    else simVessel.TriggerActionGroup(KSPActionGroup.Lights);
+                    break;
+                case AdvancedActionGroupIndexes.advancedRcsAction:
+                    debugString += "RCS.";
+                    if (activate) simVessel.SetRCSEnabled(true);
+                    else if (deactivate) simVessel.SetRCSEnabled(false);
+                    else simVessel.SetRCSEnabled(!simVessel.IsRCSEnabled);
+                    break;
+                case AdvancedActionGroupIndexes.advancedSasAction:
+                    debugString += "SAS.";
+                    if (activate) simVessel.SetAutopilotEnableDisable(true);
+                    else if (deactivate) simVessel.SetAutopilotEnableDisable(false);
+                    else simVessel.SetAutopilotEnableDisable(!simVessel.AutopilotStatus.IsEnabled);
+                    break;
+                case AdvancedActionGroupIndexes.advancedBrakesAction:
+                    debugString += "brakes.";
+                    if (activate) currentVessel.SetGroup(KSPActionGroup.Brakes, true);
+                    else if (deactivate) currentVessel.SetGroup(KSPActionGroup.Brakes, false);
+                    else currentVessel.TriggerGroup(KSPActionGroup.Brakes);
+                    break;
+                case AdvancedActionGroupIndexes.advancedAbortAction:
+                    debugString += "abort.";
+                    if (activate) simVessel.SetActionGroup(KSPActionGroup.Abort, true);
+                    else if (deactivate) simVessel.SetActionGroup(KSPActionGroup.Abort, false);
+                    else simVessel.TriggerActionGroup(KSPActionGroup.Abort);
+                    break;
+                case AdvancedActionGroupIndexes.advancedSolarAction:
+                    debugString += "solar.";
+                    if (activate) simVessel.SetActionGroup(KSPActionGroup.SolarPanels, true);
+                    else if (deactivate) simVessel.SetActionGroup(KSPActionGroup.SolarPanels, false);
+                    else simVessel.TriggerActionGroup(KSPActionGroup.SolarPanels);
+                    break;
+                case AdvancedActionGroupIndexes.advancedRadiatorAction:
+                    debugString += "solar.";
+                    if (activate) simVessel.SetActionGroup(KSPActionGroup.RadiatorPanels, true);
+                    else if (deactivate) simVessel.SetActionGroup(KSPActionGroup.RadiatorPanels, false);
+                    else simVessel.TriggerActionGroup(KSPActionGroup.RadiatorPanels);
+                    break;
+                default:
+                    break;
+            }
+
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue(debugString);
         }
 
         private byte getGroups()
