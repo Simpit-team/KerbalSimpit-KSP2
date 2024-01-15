@@ -18,7 +18,6 @@ using System.Collections.Concurrent;
 //TODO Automatically open port on game start
 //TODO Changing Serial Port without restarting KSP2 lets you connect, but the actual Messages don't go through?!?
 
-//TODO Arduino lib - Resources.cs : Implement other resources: OutboundPackets 52 to 62
 //TODO Two more new messages for action groups: SetSingleActionGroup and FeedbackValue (On, Off, Mixed)
 //      inbound: 6 bits for addr of action group 2 bits for on,off,toggle
 //      outbound: 2 bits for state on,off,mixed,notAvailable for each of the action groups
@@ -274,7 +273,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<SolidFuelProvider>();
         providers.AddComponent<SolidFuelStageProvider>();
         providers.AddComponent<IntakeAirProvider>();
-        providers.AddComponent<TestRocksProvider>();
+        //providers.AddComponent<TestRocksProvider>();
         providers.AddComponent<EvaPropellantProvider>();
         providers.AddComponent<HydrogenProvider>();
         providers.AddComponent<HydrogenStageProvider>();
@@ -282,16 +281,16 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<LiquidFuelStageProvider>();
         providers.AddComponent<OxidizerProvider>();
         providers.AddComponent<OxidizerStageProvider>();
-        providers.AddComponent<MethaloxProvider>();
-        providers.AddComponent<MethaloxStageProvider>();
-        providers.AddComponent<MethaneAirProvider>();
-        providers.AddComponent<MethaneAirStageProvider>();
+        //providers.AddComponent<MethaloxProvider>();
+        //providers.AddComponent<MethaloxStageProvider>();
+        //providers.AddComponent<MethaneAirProvider>();
+        //providers.AddComponent<MethaneAirStageProvider>();
         providers.AddComponent<UraniumProvider>();
         providers.AddComponent<ElectricChargeProvider>();
         providers.AddComponent<XenonGasProvider>();
         providers.AddComponent<XenonGasStageProvider>();
-        providers.AddComponent<XenonECProvider>();
-        providers.AddComponent<XenonECStageProvider>();
+        //providers.AddComponent<XenonECProvider>();
+        //providers.AddComponent<XenonECStageProvider>();
         providers.AddComponent<AblatorProvider>();
         providers.AddComponent<AblatorStageProvider>();
         providers.AddComponent<KerbalSimpitTargetProvider>();

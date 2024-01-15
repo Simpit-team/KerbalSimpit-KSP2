@@ -23,6 +23,19 @@
         public static byte MonoPropellant = 16;
         public static byte EvaPropellant = 18;
 
+        //Propulsion Resources on KSP2
+        public static byte IntakeAir = 52;
+        //public static byte TestRocks = xx; //Available in KSP2 but seems to be unused
+        public static byte Hydrogen = 53;
+        public static byte HydrogenStage = 54;
+        //public static byte Methalox = xx; //Available in KSP2 but seems to be unused
+        //public static byte MethaloxStage = xx; //Available in KSP2 but seems to be unused
+        //public static byte MethaneAir = xx; //Available in KSP2 but seems to be unused
+        //public static byte MethaneAirStage = xx; //Available in KSP2 but seems to be unused
+        public static byte Uranium = 55;
+        //public static byte XenonEC = xx; //Available in KSP2 but seems to be unused
+        //public static byte XenonECStage = xx; //Available in KSP2 but seems to be unused
+
         // Vessel Resources
         public static byte ElectricCharge = 17;
         public static byte Ore = 19;
@@ -32,19 +45,6 @@
         public static byte TACLSWaste = 31;
         public static byte CustomResource1 = 32;
         public static byte CustomResource2 = 33;
-
-        //Propulsion Resources on KSP2
-        public static byte IntakeAir = 52;
-        public static byte TestRocks = 53;
-        public static byte Hydrogen = 54;
-        public static byte HydrogenStage = 55;
-        public static byte Methalox = 56;
-        public static byte MethaloxStage = 57;
-        public static byte MethaneAir = 58;
-        public static byte MethaneAirStage = 59;
-        public static byte Uranium = 60;
-        public static byte XenonEC = 61;
-        public static byte XenonECStage = 62;
 
         // Vessel Movement/Postion
         public static byte Altitude = 8;
