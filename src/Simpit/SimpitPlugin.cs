@@ -18,9 +18,7 @@ using System.Collections.Concurrent;
 //TODO Automatically open port on game start
 //TODO Changing Serial Port without restarting KSP2 lets you connect, but the actual Messages don't go through?!?
 
-//TODO Two more new messages for action groups: SetSingleActionGroup and FeedbackValue (On, Off, Mixed)
-//      inbound: 6 bits for addr of action group 2 bits for on,off,toggle
-//      outbound: 2 bits for state on,off,mixed,notAvailable for each of the action groups
+//TODO New messages for action groups: SetSingleActionGroup with 6 bits for addr of action group 2 bits for on,off,toggle
 //      on all three sides (Arduino, KSP1, KSP2)
 //TODO Add a Science Collection feature + info when science gets available 
 //TODO CameraControl
@@ -28,9 +26,7 @@ using System.Collections.Concurrent;
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
 //TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
-
 //TODO FlightProvider.cs: Get a better CommNet signal strength. Is there something like that in KSP2? Can it be calculated by antennas and distance?
-
 //TODO WarpControl.cs : Timewarp to PE goes past the Pe if Pe is in another SOI (e.g. going to the mun)
 //TODO WarpControl.cs : warp levels are different between KSP2 and KSP1 how to handle that?
 //TODO WarpControl.cs : timewarp to Next morining doesn't work
@@ -39,7 +35,6 @@ using System.Collections.Concurrent;
 //TODO CoreProvider.cs: Scene switch not detected correctly.
 //TODO Requesting FLIGHT_STATUS_MESSAGE does not seem to work
 
-//TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
 //TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) which is currently in use and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Should the latter be added?
 
 namespace Simpit;

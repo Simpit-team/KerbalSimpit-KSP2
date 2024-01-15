@@ -70,6 +70,8 @@
         public static byte BurnTime = 40;
         public static byte CustomActionGroups = 41;
         public static byte TempLimit = 42;
+        public static byte AdvancedActionGroups = 56;
+        public static byte AdvancedCustomActionGroups = 57;
 
         // External Environment
         public static byte TargetInfo = 25;
@@ -153,6 +155,19 @@
         public static byte BrakesBit = 32;
         public static byte AbortBit = 64;
     }
+
+    public static class AdvancedActionGroupIndexes
+    {
+        public static byte advancedStageAction = 0;
+        public static byte advancedGearAction = 1;
+        public static byte advancedLightAction = 2;
+        public static byte advancedRcsAction = 3;
+        public static byte advancedSasAction = 4;
+        public static byte advancedBrakesAction = 5;
+        public static byte advancedAbortAction = 6;
+        public static byte advancedSolarAction = 7;
+        public static byte advancedRadiatorAction = 8;
+    };
 
     public static class WarpControlValues
     {

@@ -1,5 +1,6 @@
 using KSP.Sim;
 using KSP.Sim.impl;
+using KSP.Sim.State;
 using SpaceWarp.API.Game;
 using SpaceWarp.API.Game.Extensions;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace Simpit.Providers
             AGToggleChannel;
 
         // Outbound messages
-        private EventDataObsolete<byte, object> AGStateChannel;
+        private EventDataObsolete<byte, object> AGStateChannel, AdvancedAGStateChannel;
 
         // TODO: Only using a single byte buffer for each of these is
         // technically unsafe. It's not impossible that multiple controllers
@@ -22,10 +23,11 @@ namespace Simpit.Providers
         // I'm not addressing it now.
         private volatile byte activateBuffer, deactivateBuffer,
             toggleBuffer, currentStateBuffer;
+        private volatile UInt32 currentAdvancedStateBuffer;
 
         // If set to true, the state should be sent at the next update even if no changes
         // are detected (for instance to initialise it after a new registration).
-        private bool resendState = false;
+        private bool resendState, resendAdvancedState = false;
 
         public void Start()
         {
@@ -43,6 +45,8 @@ namespace Simpit.Providers
 
             AGStateChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.ActionGroups);
             GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialChannelForceSend" + OutboundPackets.ActionGroups).Add(resendActionGroup);
+            AdvancedAGStateChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.AdvancedActionGroups);
+            GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialChannelForceSend" + OutboundPackets.AdvancedActionGroups).Add(resendAdvancedActionGroup);
         }
 
         public void OnDestroy()
@@ -55,6 +59,11 @@ namespace Simpit.Providers
         public void resendActionGroup(byte ID, object Data)
         {
             resendState = true;
+        }
+
+        public void resendAdvancedActionGroup(byte ID, object Data)
+        {
+            resendAdvancedState = true;
         }
 
         public void Update()
@@ -76,6 +85,7 @@ namespace Simpit.Providers
             }
 
             updateCurrentState();
+            updateAdvancedCurrentState();
         }
 
         public void actionActivateCallback(byte ID, object Data)
@@ -108,6 +118,25 @@ namespace Simpit.Providers
                 }
                 return true;
             } else {
+                return false;
+            }
+        }
+
+        private bool updateAdvancedCurrentState()
+        {
+            UInt32 newState = getAdvancedGroups();
+            if (newState != currentAdvancedStateBuffer || resendAdvancedState)
+            {
+                resendAdvancedState = false;
+                if (AdvancedAGStateChannel != null)
+                {
+                    AdvancedAGStateChannel.Fire(OutboundPackets.AdvancedActionGroups, newState);
+                    currentAdvancedStateBuffer = newState;
+                }
+                return true;
+            }
+            else
+            {
                 return false;
             }
         }
@@ -348,6 +377,60 @@ namespace Simpit.Providers
             }
             */
             return groups;
+        }
+
+        private UInt32 getAdvancedGroups()
+        {
+
+            VesselVehicle currentVessel = null;
+            VesselComponent simVessel = null;
+            try
+            {
+                currentVessel = Vehicle.ActiveVesselVehicle;
+                simVessel = Vehicle.ActiveSimVessel;
+            }
+            catch { return 0; }
+            if (currentVessel == null || simVessel == null) return 0;
+
+            UInt32 advancedGroups = 0;
+
+            //Move the state of each action group to it's according place in the byte array
+
+            UInt32 state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.Gear);
+            int moveBy = AdvancedActionGroupIndexes.advancedGearAction * 2;
+            advancedGroups |= state << moveBy;
+
+            state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.Lights);
+            moveBy = AdvancedActionGroupIndexes.advancedLightAction * 2;
+            advancedGroups |= state << moveBy;
+
+            state = (UInt32)KSPActionGroupState.False;
+            if (simVessel.IsRCSEnabled) state = (UInt32)KSPActionGroupState.True;
+            moveBy = AdvancedActionGroupIndexes.advancedRcsAction * 2;
+            advancedGroups |= state << moveBy;
+
+            state = (UInt32)KSPActionGroupState.False;
+            if (simVessel.AutopilotStatus.IsEnabled) state = (UInt32)KSPActionGroupState.True;
+            moveBy = AdvancedActionGroupIndexes.advancedSasAction * 2;
+            advancedGroups |= state << moveBy;
+
+            state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.Brakes);
+            moveBy = AdvancedActionGroupIndexes.advancedBrakesAction * 2;
+            advancedGroups |= state << moveBy;
+
+            state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.Abort);
+            moveBy = AdvancedActionGroupIndexes.advancedAbortAction * 2;
+            advancedGroups |= state << moveBy;
+
+            state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.SolarPanels);
+            moveBy = AdvancedActionGroupIndexes.advancedSolarAction * 2;
+            advancedGroups |= state << moveBy;
+
+            state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.RadiatorPanels);
+            moveBy = AdvancedActionGroupIndexes.advancedRadiatorAction * 2;
+            advancedGroups |= state << moveBy;
+
+            return advancedGroups;
         }
     }
 }
