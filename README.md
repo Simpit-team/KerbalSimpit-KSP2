@@ -10,11 +10,11 @@ We have a Discord Server! [Invite Link](https://discord.gg/ZwcPdNcaRN). We have 
 ## How to install
 This mod comes in two parts: the KSP mod and the Arduino lib.
 To install the KSP mod, you can either:
-- Install it through [CKAN](https://github.com/KSP-CKAN/CKAN) by installing Simpit (easier)
+- Install it through [CKAN](https://github.com/KSP-CKAN/CKAN) by installing KerbalSimpitKSP2 (easier)
 - Download it from github and install it manually (harder)
 	- Download and install the dependencies (SpaceWarp, UITK for KSP2, BepInEx).
 	- Go the release tab and dowload the latest version of this mod. 
-	- Copy the Simpit folder next to its dependencies into the BepInEx/plugins/ folder of your KSP2 install.
+	- Copy the KerbalSimpitKSP2 folder next to its dependencies into the BepInEx/plugins/ folder of your KSP2 install.
 
 After that start KSP2 and go to the MODS section in the main menu to change the Serial port to the port of your Arduino in the Simpit settings. You can find the right port name by copying the port name you are using in the Arduino IDE.
 
