@@ -25,7 +25,7 @@ namespace Simpit.Providers
             toggleBuffer, currentStateBuffer;
         //Using a queue here in case the controller rapidly sets multiple action groups in succession
         //to avoid the buffer being overwritten before it can be applied to the game
-        private volatile ConcurrentQueue<byte> setSingleBuffer;
+        private volatile ConcurrentQueue<byte> setSingleBuffer = new ConcurrentQueue<byte>();
         private volatile UInt32 currentAdvancedStateBuffer;
 
         // If set to true, the state should be sent at the next update even if no changes
