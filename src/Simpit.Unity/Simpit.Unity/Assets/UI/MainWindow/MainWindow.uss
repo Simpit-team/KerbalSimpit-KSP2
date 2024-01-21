@@ -1,15 +1,21 @@
 .root {
-    max-width: 300px;
-    max-height: 300px;
+    max-width: 250px;
+    max-height: 250px;
 }
 
 #title-bar {
     justify-content: space-between;
 }
 
+#title-bar > .unity-button {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+}
+
 #icon {
-    width: 32px;
-    height: 32px;
+    width: 22px;
+    height: 22px;
     align-self: center;
     background-image: url('project://database/Assets/Images/icon.png?fileID=21300000&guid=7ed5cdb1dc1b4730bdb0f8096d09dd9d&type=3#icon');
     -unity-background-image-tint-color: rgb(175, 178, 190);
@@ -31,6 +37,7 @@
 }
 
 .unity-text-field > .unity-base-text-field__input {
-    padding: 0px 2px;
+    padding: 0px 4px;
     margin: 0px;
+    border-radius: 4px;
 }
