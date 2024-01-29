@@ -19,8 +19,6 @@ using Simpit.UI;
 //TODO Automatically open port on game start
 //TODO Changing Serial Port without restarting KSP2 lets you connect, but the actual Messages don't go through?!?
 
-//TODO New messages for action groups: SetSingleActionGroup with 6 bits for addr of action group 2 bits for on,off,toggle
-//      on all three sides (Arduino, KSP1, KSP2)
 //TODO Add a Science Collection feature + info when science gets available 
 //TODO CameraControl
 
