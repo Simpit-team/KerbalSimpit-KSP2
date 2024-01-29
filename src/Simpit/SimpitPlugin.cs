@@ -3,15 +3,16 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using SpaceWarp;
 using SpaceWarp.API.Mods;
+using SpaceWarp.API.Logging;
 using UnityEngine;
 using KSP.Game;
 using KerbalSimpit.Serial;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Simpit.Providers;
-using SpaceWarp.API.Logging;
 using Simpit.External;
 using System.Collections.Concurrent;
+using Simpit.UI;
 
 
 //TODO Support multiple serial ports
@@ -94,8 +95,6 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     private bool DoEventDispatching = false;
     private Thread EventDispatchThread;
 
-
-
     /// <summary>
     /// Runs when the mod is first initialized.
     /// </summary>
@@ -121,7 +120,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         //Initialize everything needed for the Providers
         InitProviders();
 
-        gui.InitGui();
+        MainWindowController.Init(ModGuid, ModName);
         
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(SimpitPlugin).Assembly);
@@ -151,13 +150,11 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             if (port.PortName != config_SerialPortName || port.BaudRate != config_SerialPortBaudRate) port.ChangePort(config_SerialPortName, config_SerialPortBaudRate); 
         }
     }
-    private void OnGUI()
-    {
-        gui.OnGui();
-    }
 
-    public void OpenPort()
+    public void OpenPort(string portName, int baudRate)
     {
+        if (port == null) return;
+
         if (port.portStatus != KSPSerialPort.ConnectionStatus.CLOSED && port.portStatus != KSPSerialPort.ConnectionStatus.ERROR)
         {
             //Port already opened. Nothing to do.
@@ -166,12 +163,11 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
             {
                 Tier = NotificationTier.Passive,
-                Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Port {0} already opened.Nothing to do.", port.PortName) }
+                Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Port {0} already opened. Nothing to do.", port.PortName) }
             });
             return;
         }
 
-        String portName = port.PortName;
         if (portName.StartsWith("COM") || portName.StartsWith("/"))
         {
             if(portName.Equals("COMxx"))
@@ -191,7 +187,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             return;
         }
 
-        if (port.open())
+        if (port.ChangePort(portName, baudRate) && port.open())
         {
             Logger.LogInfo(String.Format("Opened port {0}", portName));
 

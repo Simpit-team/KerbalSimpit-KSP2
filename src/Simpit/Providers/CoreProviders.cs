@@ -7,6 +7,7 @@ using KSP.IO;
 using KSP.Iteration.UI.Binding;
 using KSP.Messages;
 using UnityEngine;
+using Simpit.UI;
 
 namespace Simpit.Providers
 {
@@ -115,7 +116,7 @@ namespace Simpit.Providers
             byte logStatus = payload[0];
             String message = System.Text.Encoding.UTF8.GetString(payload.Skip(1).ToArray());
 
-            SimpitGui.SetDebugText(message);
+            MainWindowController.Instance.SetDebugText(message);
 
             if((logStatus & CustomLogBits.NoHeader) == 0)
             {
