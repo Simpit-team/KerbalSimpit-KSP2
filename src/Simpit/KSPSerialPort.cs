@@ -97,7 +97,7 @@ namespace KerbalSimpit.Serial
             if (Port.IsOpen)
             {
                 SimpitPlugin.Instance.loggingQueueWarning.Enqueue(String.Format("Can't change port because port {0} is already open", Port.PortName));
-                return;
+                return false;
             }
             PortName = newPortName;
             BaudRate = newBaudRate;

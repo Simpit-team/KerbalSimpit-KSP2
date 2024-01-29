@@ -58,7 +58,6 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     public ConcurrentQueue<string> loggingQueueDebug = new ConcurrentQueue<string>();
     public ConcurrentQueue<string> loggingQueueWarning = new ConcurrentQueue<string>();
     public ConcurrentQueue<string> loggingQueueError = new ConcurrentQueue<string>();
-    SimpitGui gui = new SimpitGui();
 
     public bool config_verbose;
     int config_refreshRate;
