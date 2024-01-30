@@ -17,14 +17,12 @@ using Simpit.UI;
 
 //TODO Support multiple serial ports
 //TODO Automatically open port on game start
-//TODO Changing Serial Port without restarting KSP2 lets you connect, but the actual Messages don't go through?!?
 
 //TODO Add a Science Collection feature + info when science gets available 
 //TODO CameraControl
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
-//TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
 //TODO FlightProvider.cs: Get a better CommNet signal strength. Is there something like that in KSP2? Can it be calculated by antennas and distance?
 //TODO WarpControl.cs : Timewarp to PE goes past the Pe if Pe is in another SOI (e.g. going to the mun)
 //TODO WarpControl.cs : warp levels are different between KSP2 and KSP1 how to handle that?
@@ -280,7 +278,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         //providers.AddComponent<XenonECProvider>();
         //providers.AddComponent<XenonECStageProvider>();
         providers.AddComponent<AblatorProvider>();
-        providers.AddComponent<AblatorStageProvider>();
+        //providers.AddComponent<AblatorStageProvider>();
         providers.AddComponent<KerbalSimpitTargetProvider>();
     }
 

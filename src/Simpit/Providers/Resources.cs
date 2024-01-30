@@ -147,8 +147,8 @@ namespace Simpit.Providers
     class XenonGasProvider : GenericResourceProvider { public XenonGasProvider() : base(OutboundPackets.XenonGas, "Xenon", false) { } }
     class XenonGasStageProvider : GenericResourceProvider { public XenonGasStageProvider() : base(OutboundPackets.XenonGasStage, "Xenon", true) { } }
     class AblatorProvider : GenericResourceProvider { public AblatorProvider() : base(OutboundPackets.Ablator, "Ablator", false) { } }
-    class AblatorStageProvider : GenericResourceProvider { public AblatorStageProvider() : base(OutboundPackets.AblatorStage, "Ablator", true) { } }
 
+    //doesn't exist any more in KSP2: class AblatorStageProvider : GenericResourceProvider { public AblatorStageProvider() : base(OutboundPackets.AblatorStage, "Ablator", true) { } }
     //doesn't exist any more in KSP2: class OreProvider : GenericResourceProvider { public OreProvider() : base(OutboundPackets.Ore, "Ore", false) { } }
 
     //The following resources exist in KSP2 but they don't seem to have any valuable info...
