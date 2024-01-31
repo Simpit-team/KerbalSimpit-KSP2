@@ -49,11 +49,12 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
     // Singleton instance of the plugin class
     [PublicAPI] public static SimpitPlugin Instance { get; set; }
-    //internal new SpaceWarp.API.Logging.ILogger Logger = new UnityLogSource(ModName);
+    //Using queues for thread safe logging
     public ConcurrentQueue<string> loggingQueueInfo = new ConcurrentQueue<string>();
     public ConcurrentQueue<string> loggingQueueDebug = new ConcurrentQueue<string>();
     public ConcurrentQueue<string> loggingQueueWarning = new ConcurrentQueue<string>();
     public ConcurrentQueue<string> loggingQueueError = new ConcurrentQueue<string>();
+    public ConcurrentQueue<NotificationData> notificationQueue = new ConcurrentQueue<NotificationData>();
 
     public bool config_verbose;
     int config_refreshRate;
@@ -119,6 +120,36 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(SimpitPlugin).Assembly);
+    }
+
+    public void Update()
+    {
+        if (!notificationQueue.IsEmpty)
+        {
+            notificationQueue.TryDequeue(out NotificationData notification);
+            GameManager.Instance.Game.Notifications.ProcessNotification(notification);
+        }
+
+        while (!loggingQueueInfo.IsEmpty)
+        {
+            loggingQueueInfo.TryDequeue(out string log);
+            Logger.LogInfo(log);
+        }
+        while (!loggingQueueDebug.IsEmpty)
+        {
+            loggingQueueDebug.TryDequeue(out string log);
+            Logger.LogDebug(log);
+        }
+        while (!loggingQueueWarning.IsEmpty)
+        {
+            loggingQueueWarning.TryDequeue(out string log);
+            Logger.LogWarning(log);
+        }
+        while (!loggingQueueError.IsEmpty)
+        {
+            loggingQueueError.TryDequeue(out string log);
+            Logger.LogError(log);
+        }
     }
 
     public void ReadConfig()

@@ -19,8 +19,6 @@ namespace Simpit.Providers
         private EventDataObsolete<byte, object> sceneChangeEvent;
         private EventDataObsolete<byte, object> controlledVesselChangeEvent;
 
-        public ConcurrentQueue<NotificationData> notificationQueue = new ConcurrentQueue<NotificationData>();
-
         public void Start()
         {
             DontDestroyOnLoad(this); // Make this provider persistent
@@ -51,41 +49,6 @@ namespace Simpit.Providers
             GameManager.Instance.Game.Messages.Subscribe<VesselChangedMessage>(new Action<MessageCenterMessage>((MessageCenterMessage mess) => {
                 controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching);
             }));
-        }
-
-        public void Update()
-        {
-            if (!notificationQueue.IsEmpty)
-            {
-                NotificationData notification;
-                notificationQueue.TryDequeue(out notification);
-                GameManager.Instance.Game.Notifications.ProcessNotification(notification);
-            }
-
-            while (!SimpitPlugin.Instance.loggingQueueInfo.IsEmpty)
-            {
-                string log;
-                SimpitPlugin.Instance.loggingQueueInfo.TryDequeue(out log);
-                SimpitPlugin.Instance.SWLogger.LogInfo(log);
-            }
-            while (!SimpitPlugin.Instance.loggingQueueDebug.IsEmpty)
-            {
-                string log;
-                SimpitPlugin.Instance.loggingQueueDebug.TryDequeue(out log);
-                SimpitPlugin.Instance.SWLogger.LogDebug(log);
-            }
-            while (!SimpitPlugin.Instance.loggingQueueWarning.IsEmpty)
-            {
-                string log;
-                SimpitPlugin.Instance.loggingQueueWarning.TryDequeue(out log);
-                SimpitPlugin.Instance.SWLogger.LogWarning(log);
-            }
-            while (!SimpitPlugin.Instance.loggingQueueError.IsEmpty)
-            {
-                string log;
-                SimpitPlugin.Instance.loggingQueueError.TryDequeue(out log);
-                SimpitPlugin.Instance.SWLogger.LogError(log);
-            }
         }
 
         public void OnDestroy()
@@ -125,7 +88,7 @@ namespace Simpit.Providers
 
             if ((logStatus & CustomLogBits.PrintToScreen) != 0)
             {
-                notificationQueue.Enqueue(new NotificationData
+                SimpitPlugin.Instance.notificationQueue.Enqueue(new NotificationData
                 {
                     Tier = NotificationTier.Passive,
                     Primary = new NotificationLineItemData { LocKey = message }
