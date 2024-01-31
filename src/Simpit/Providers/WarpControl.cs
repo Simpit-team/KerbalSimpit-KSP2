@@ -23,7 +23,6 @@ namespace Simpit.Providers
         private EventDataObsolete<byte, object> WarpChannel, TimewarpToChannel;
 
         private const bool USE_INSTANT_WARP = false;
-        private const bool DISPLAY_MESSAGE = false; //When true, each call to Timewarp.SetRate crashes KSP on my computer
 
         public void Start()
         {
@@ -67,80 +66,36 @@ namespace Simpit.Providers
 
         public void ProcessWarpCommand(byte command)
         {
-            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("receveid TW command " + command);
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Receveid TW command " + command);
             //UniverseDataProvider udp = GameManager.Instance.Game.ViewController.DataProvider.UniverseDataProvider;
             //int currentRate = udp.GetTimeRateIndex();
             TimeWarp tw = GameManager.Instance.Game.ViewController.TimeWarp;
             switch (command)
             {
-                case WarpControlValues.warpRate1:
+                case WarpControlValuesKsp2.warpRate1:
+                case WarpControlValuesKsp2.warpRate2:
+                case WarpControlValuesKsp2.warpRate3:
+                case WarpControlValuesKsp2.warpRate4:
+                case WarpControlValuesKsp2.warpRate5:
+                case WarpControlValuesKsp2.warpRate6:
+                case WarpControlValuesKsp2.warpRate7:
+                case WarpControlValuesKsp2.warpRate8:
+                case WarpControlValuesKsp2.warpRate9:
+                case WarpControlValuesKsp2.warpRate10:
+                case WarpControlValuesKsp2.warpRate11:
                     tw.SetRateIndex(command, USE_INSTANT_WARP);
-                    //KSP2 SetWarpRate(command);
-                    //KSP1 TimeWarp.SetRate(0, USE_INSTANT_WARP, DISPLAY_MESSAGE);
                     break;
-                case WarpControlValues.warpRate2:
-                case WarpControlValues.warpRate3:
-                case WarpControlValues.warpRate4:
-                case WarpControlValues.warpRate5:
-                case WarpControlValues.warpRate6:
-                case WarpControlValues.warpRate7:
-                case WarpControlValues.warpRate8:
-                    tw.SetRateIndex(command, USE_INSTANT_WARP);
-                    //SetWarpRate(command);
-                    break;
-                case WarpControlValues.warpRatePhys1:
-                    tw.SetRateIndex(0, USE_INSTANT_WARP);
-                    //SetWarpRate(0);
-                    break;
-                case WarpControlValues.warpRatePhys2:
-                    tw.SetRateIndex(1, USE_INSTANT_WARP);
-                    //SetWarpRate(1);
-                    break;
-                case WarpControlValues.warpRatePhys3:
-                    tw.SetRateIndex(1, USE_INSTANT_WARP);
-                    //SetWarpRate(2);
-                    break;
-                case WarpControlValues.warpRatePhys4:
-                    //SetWarpRate(command - WarpControlValues.warpRatePhys1);
-                    //SetWarpRate(2);
-                    tw.SetRateIndex(2, USE_INSTANT_WARP);
-                    break;
-                case WarpControlValues.warpRateUp:
+                case WarpControlValuesKsp2.warpRateUp:
                     tw.IncreaseTimeWarp();
-                    /*
-                    int MaxRateIndex = udp.GetMaxTimeRateIndex();
-                    if (currentRate < MaxRateIndex)
-                    {
-                        SetWarpRate(currentRate + 1);
-                        // KSP1 UnityMainThreadDispatcher.Instance().Enqueue(() => TimeWarp.SetRate(currentRate + 1, USE_INSTANT_WARP, DISPLAY_MESSAGE));
-                    }
-                    else
-                    {
-                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Already at max warp rate.");
-                    }
-                    */
                     break;
-                case WarpControlValues.warpRateDown:
+                case WarpControlValuesKsp2.warpRateDown:
                     tw.DecreaseTimeWarp();
-                    /*
-                    if (currentRate > 0)
-                    {
-                        SetWarpRate(currentRate - 1);
-                    }
-                    else
-                    {
-                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Already at min warp rate.");
-                    }
-                    */
                     break;
-                case WarpControlValues.warpCancelAutoWarp:
+                case WarpControlValuesKsp2.warpCancelAutoWarp:
                     tw.StopTimeWarp();
-                    //udp.SetTimeRateIndex(0);
-                    //KSP1 TimeWarp.fetch.CancelAutoWarp();
-                    //KSP1 TimeWarp.SetRate(0, USE_INSTANT_WARP, DISPLAY_MESSAGE);
                     break;
                 default:
-                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue("received an unrecognized Warp control command : " + command + ". Ignoring it.");
+                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Received an unrecognized Warp control command : " + command + ". Ignoring it.");
                     break;
             }
         }
@@ -148,18 +103,24 @@ namespace Simpit.Providers
         public void ProcessTimewarpToCommand(TimewarpToStruct command)
         {
             // In those cases, we need to timewarp to a given time. Let's compute this time (UT)
-            double timeToWarp = -1;
+            double timeToWarpTo = double.MinValue;
 
             VesselComponent simVessel = null;
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
             if (simVessel == null) return;
 
             double ut = GameManager.Instance.Game.SpaceSimulation.UniverseModel.UniverseTime;
+            PatchTransitionType orbitType = simVessel.Orbit.PatchEndTransition;
+            double timeOfSOIChange = double.NaN;
+            if (orbitType == PatchTransitionType.Encounter || orbitType == PatchTransitionType.Escape)
+            {
+                timeOfSOIChange = simVessel.Orbit.EndUT;
+            }
 
             switch (command.instant)
             {
                 case TimewarpToValues.timewarpToNow:
-                    timeToWarp = ut;
+                    timeToWarpTo = ut;
                     break;
                 //In KSP2 the maneuver time isn't in the middle of the maneuver any more, but at the start of the maneuver, so maneuver time and start burn time are the same
                 case TimewarpToValues.timewarpToManeuver:
@@ -167,36 +128,43 @@ namespace Simpit.Providers
                     List<ManeuverNodeData> maneuvers = simVessel.Orbiter.SimulationObject.ManeuverPlan.GetNodes();
                     if (maneuvers != null && maneuvers.Count > 0 && maneuvers[0] != null)
                     {
-                        timeToWarp = maneuvers[0].Time;
+                        timeToWarpTo = maneuvers[0].Time;
                     }
                     else
                     {
                         SimpitPlugin.Instance.loggingQueueInfo.Enqueue("There is no maneuver to warp to.");
+                        return;
                     }
                     break;
                 case TimewarpToValues.timewarpToNextSOI:
-                    PatchTransitionType orbitType = simVessel.Orbit.PatchEndTransition;
-
-                    if (orbitType == PatchTransitionType.Encounter ||
-                        orbitType == PatchTransitionType.Escape)
+                    if (timeOfSOIChange != double.NaN)
                     {
-                        timeToWarp = simVessel.Orbit.EndUT;
+                        timeToWarpTo = timeOfSOIChange;
                     }
                     else
                     {
-                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("There is no SOI change to warp to. Orbit type : " + orbitType);
+                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("There is no SOI change to warp to. Orbit type : " + orbitType); 
+                        return;
                     }
                     break;
                 case TimewarpToValues.timewarpToApoapsis:
+                    
                     double timeToApoapsis = simVessel.Orbit.TimeToAp;
                     if (Double.IsNaN(timeToApoapsis) || Double.IsInfinity(timeToApoapsis))
                     {
                         //This can happen in an escape trajectory for instance
                         SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Cannot TW to apoasis since there is no apoapsis");
+                        return;
+                    }
+                    else if (timeOfSOIChange != double.NaN && ut + timeToApoapsis > timeOfSOIChange)
+                    {
+                        //This can happen in an escape trajectory for instance
+                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Cannot TW to apoasis since there is an SOI change before that");
+                        return;
                     }
                     else
                     {
-                        timeToWarp = ut + timeToApoapsis;
+                        timeToWarpTo = ut + timeToApoapsis;
                     }
                     break;
                 case TimewarpToValues.timewarpToPeriapsis:
@@ -205,10 +173,17 @@ namespace Simpit.Providers
                     {
                         //Can this happen ?
                         SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Cannot TW to periapsis since there is no periapsis");
+                        return;
+                    }
+                    else if (timeOfSOIChange != double.NaN && ut + timeToPeriapsis > timeOfSOIChange)
+                    {
+                        //This can happen in an escape trajectory for instance
+                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Cannot TW to periapsis since there is an SOI change before that");
+                        return;
                     }
                     else
                     {
-                        timeToWarp = ut + timeToPeriapsis;
+                        timeToWarpTo = ut + timeToPeriapsis;
                     }
                     break;
                 case TimewarpToValues.timewarpToNextMorning:
@@ -218,39 +193,40 @@ namespace Simpit.Providers
                         simVessel.Situation == VesselSituations.PreLaunch)
                     {
                         double timeToMorning = OrbitalComputations.TimeToDaylight(simVessel.Latitude, simVessel.Longitude, simVessel.mainBody);
-                        timeToWarp = ut + timeToMorning;
+                        timeToWarpTo = ut + timeToMorning;
                     }
                     else
                     {
                         SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Cannot warp to next morning if not landed or splashed");
+                        return;
                     }
                     break;
                 default:
-                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue("received an unrecognized WarpTO command : " + command + ". Ignoring it.");
+                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Received an unrecognized WarpTo command : " + command + ". Ignoring it.");
+                    return;
                     break;
             }
 
-            timeToWarp = timeToWarp + command.delay;
-            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("TW to UT " + timeToWarp + ". Which is " + (timeToWarp - ut) + "s away");
+            timeToWarpTo = timeToWarpTo + command.delay;
+            
+            if (timeToWarpTo < 0)
+            {
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Cannot compute the time to timewarp to. Ignoring TW command " + command);
+                return;
+            }
+            if (timeToWarpTo < ut)
+            {
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Cannot warp in the past. Ignoring TW command " + command);
+                return;
+            }
 
-            if (timeToWarp < 0)
-            {
-                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("cannot compute the time to timewarp to. Ignoring TW command " + command);
-            }
-            else if (timeToWarp < ut)
-            {
-                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("cannot warp in the past. Ignoring TW command " + command);
-            }
-            else
-            {
-                safeWarpTo(timeToWarp);
-            }
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("TW to UT " + timeToWarpTo + ". Which is " + (timeToWarpTo - ut) + "s away");
+            safeWarpTo(timeToWarpTo);
         }
 
         private void safeWarpTo(double UT)
         {
             GameManager.Instance.Game.ViewController.TimeWarp.WarpTo(UT);
-            //KSP1 UnityMainThreadDispatcher.Instance().Enqueue(() => TimeWarp.fetch.WarpTo(UT));
         }
     }
 }
