@@ -33,8 +33,12 @@ namespace Simpit.Providers
             sceneChangeEvent = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.SceneChange);
             controlledVesselChangeEvent = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.VesselChange);
 
-            GameEvents.onFlightReady.Add(FlightReadyHandler);
-            GameEvents.onGameSceneSwitchRequested.Add(FlightShutdownHandler);
+            GameManager.Instance.Game.Messages.Subscribe<FlightViewEnteredMessage>(new Action<MessageCenterMessage>((MessageCenterMessage mess) => {
+                sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x00);
+            }));
+            GameManager.Instance.Game.Messages.Subscribe<FlightViewLeftMessage>(new Action<MessageCenterMessage>((MessageCenterMessage mess) => {
+                sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x01);
+            }));
 
             //deal with event related to a new vessel being controlled
 
@@ -56,9 +60,6 @@ namespace Simpit.Providers
             if (echoRequestEvent != null) echoRequestEvent.Remove(EchoRequestCallback);
             if (echoReplyEvent != null) echoReplyEvent.Remove(EchoReplyCallback);
             if (customLogEvent != null) customLogEvent.Remove(CustomLogCallback);
-
-            GameEvents.onFlightReady.Remove(FlightReadyHandler);
-            GameEvents.onGameSceneSwitchRequested.Remove(FlightShutdownHandler);
         }
 
         public void EchoRequestCallback(byte ID, object Data)
@@ -98,25 +99,6 @@ namespace Simpit.Providers
             if ((logStatus & CustomLogBits.Verbose) == 0 || SimpitPlugin.Instance.config_verbose)
             {
                 SimpitPlugin.Instance.loggingQueueInfo.Enqueue(message);
-            }
-        }
-
-        private void FlightReadyHandler()
-        {
-            if (sceneChangeEvent != null)
-            {
-                sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x00);
-            }
-        }
-
-        private void FlightShutdownHandler(GameEvents.FromToAction<GameScenes, GameScenes> scenes)
-        {
-            if (scenes.from == GameScenes.FLIGHT)
-            {
-                if (sceneChangeEvent != null)
-                {
-                    sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x01);
-                }
             }
         }
     }

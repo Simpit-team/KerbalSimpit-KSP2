@@ -23,16 +23,15 @@ using Simpit.UI;
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 
-//TODO FlightProvider.cs: Get a better CommNet signal strength. Is there something like that in KSP2? Can it be calculated by antennas and distance?
 //TODO WarpControl.cs : Timewarp to PE goes past the Pe if Pe is in another SOI (e.g. going to the mun)
 //TODO WarpControl.cs : warp levels are different between KSP2 and KSP1 how to handle that?
 //TODO WarpControl.cs : timewarp to Next morining doesn't work
 //TODO Telemetry.cs : maneuverData and rotationData don't work, probably because the angle calculations don't work
 //TODO TargetInfo.cs: Target Heading and Target Pitch and according velocities don't work
-//TODO CoreProvider.cs: Scene switch not detected correctly.
 //TODO Requesting FLIGHT_STATUS_MESSAGE does not seem to work
 
 //TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) which is currently in use and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Should the latter be added?
+//TODO FlightProvider.cs: Get a better CommNet signal strength. KSP2 currently only offers "Has connection" or "No connection". Signal strength would have to be calculated manually. Not doing it for now.
 
 namespace Simpit;
 
