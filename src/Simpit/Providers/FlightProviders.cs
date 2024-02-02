@@ -37,7 +37,7 @@ namespace Simpit.Providers
             CelestialBodyComponent body = simVessel.mainBody;
             if (body == null) return false;
 
-            if (body._celestialDataProvider.HasAtmosphere.GetValue())
+            if (body.hasAtmosphere)
             {
                 message.atmoCharacteristics |= AtmoConditionsBits.hasAtmosphere;
                 if (body.atmosphereContainsOxygen) message.atmoCharacteristics |= AtmoConditionsBits.hasOxygen;
@@ -86,7 +86,7 @@ namespace Simpit.Providers
             if (simVessel == null || tw == null) return false;
 
             myFlightStatus.flightStatusFlags = 0;
-            if (simVessel.IsVesselInFlight()) myFlightStatus.flightStatusFlags += FlightStatusBits.isInFlight;
+            if (simVessel.IsFlying) myFlightStatus.flightStatusFlags += FlightStatusBits.isInFlight;
             if (simVessel.IsKerbalEVA) myFlightStatus.flightStatusFlags += FlightStatusBits.isEva;
             if (simVessel.IsVesselRecoverable) myFlightStatus.flightStatusFlags += FlightStatusBits.isRecoverable;
             if (tw.IsPhysicsTimeWarp) myFlightStatus.flightStatusFlags += FlightStatusBits.isInAtmoTW;

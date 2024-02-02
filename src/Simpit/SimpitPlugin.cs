@@ -92,9 +92,9 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         base.OnInitialized();
 
-        Assembly ass = Assembly.LoadFile(Path.Combine(PluginFolderPath, "assets", "lib", "System.ComponentModel.Primitives.dll"));
+        Assembly ass = Assembly.LoadFile(Path.Combine(SWMetadata.Folder.FullName, "assets", "lib", "System.ComponentModel.Primitives.dll"));
         Logger.LogDebug("Loaded dll: " + ass.ToString());
-        ass = Assembly.LoadFile(Path.Combine(PluginFolderPath, "assets", "lib", "System.IO.Ports.dll"));
+        ass = Assembly.LoadFile(Path.Combine(SWMetadata.Folder.FullName, "assets", "lib", "System.IO.Ports.dll"));
         Logger.LogDebug("Loaded dll: " + ass.ToString());
 
         Instance = this;

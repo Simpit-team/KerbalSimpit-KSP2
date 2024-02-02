@@ -75,3 +75,4 @@
               Command="$(PowerShellExecutable) &quot;start-process &quot;&quot;$(KSP2DIR)\KSP2_x64.exe&quot;&quot;&quot;"/>
     </Target>
 </Project>
+

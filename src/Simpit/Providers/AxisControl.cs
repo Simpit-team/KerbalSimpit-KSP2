@@ -226,7 +226,7 @@ namespace Simpit.Providers
                 if (SimpitPlugin.Instance.config_verbose) 
                 {
                     SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("payload is {0}", mySASMode));
-                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("SAS mode is {0}", autopilot._mode.ToString()));
+                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("SAS mode is {0}", autopilot.AutopilotMode.ToString()));
                 }
             }
             else
@@ -288,7 +288,7 @@ namespace Simpit.Providers
 
             if (autopilot.Enabled)
             {
-                newSASInfo.currentSASMode = (byte)autopilot._mode;
+                newSASInfo.currentSASMode = (byte)autopilot.AutopilotMode;
             }
             else
             {

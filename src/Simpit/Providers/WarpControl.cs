@@ -54,7 +54,7 @@ namespace Simpit.Providers
         public void SetWarpRate(int rateIndex)
         {
             UniverseDataProvider udp = GameManager.Instance.Game.ViewController.DataProvider.UniverseDataProvider;
-            if (rateIndex <= udp.GetMaxTimeRateIndex())
+            if (rateIndex <= udp.MaxTimeRateIndex.GetValue())
             {
                 udp.SetTimeRateIndex(rateIndex);
             }

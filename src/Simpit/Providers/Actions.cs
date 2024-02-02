@@ -190,8 +190,8 @@ namespace Simpit.Providers
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Activating RCS");
-                //simVessel.SetActionGroup(KSPActionGroup.RCS, true);
-                simVessel.SetRCSEnabled(true);
+                simVessel.SetActionGroup(KSPActionGroup.RCS, true);
+                //simVessel.SetRCSEnabled(true);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
@@ -250,8 +250,8 @@ namespace Simpit.Providers
             if ((groups & ActionGroupBits.RCSBit) != 0)
             {
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Deactivating RCS");
-                //simVessel.SetActionGroup(KSPActionGroup.RCS, false);
-                simVessel.SetRCSEnabled(false);
+                simVessel.SetActionGroup(KSPActionGroup.RCS, false);
+                //simVessel.SetRCSEnabled(false);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
@@ -311,8 +311,8 @@ namespace Simpit.Providers
             {
                 if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue("Toggling RCS");
                 //simVessel.SetActionGroup(KSPActionGroup.RCS, simVessel.GetActionGroupState(KSPActionGroup.RCS) == KSPActionGroupState.False);
-                //simVessel.TriggerActionGroup(KSPActionGroup.RCS);
-                simVessel.SetRCSEnabled(!simVessel.IsRCSEnabled);
+                simVessel.TriggerActionGroup(KSPActionGroup.RCS);
+                //simVessel.SetRCSEnabled(!simVessel.IsRCSEnabled);
             }
             if ((groups & ActionGroupBits.SASBit) != 0)
             {
@@ -387,9 +387,9 @@ namespace Simpit.Providers
                     break;
                 case AdvancedActionGroupIndexes.advancedRcsAction:
                     debugString += "RCS.";
-                    if (activate) simVessel.SetRCSEnabled(true);
-                    else if (deactivate) simVessel.SetRCSEnabled(false);
-                    else simVessel.SetRCSEnabled(!simVessel.IsRCSEnabled);
+                    if (activate) simVessel.SetActionGroup(KSPActionGroup.RCS, true);// SetRCSEnabled(true);
+                    else if (deactivate) simVessel.SetActionGroup(KSPActionGroup.RCS, false);// SetRCSEnabled(false);
+                    else simVessel.TriggerActionGroup(KSPActionGroup.RCS);// SetRCSEnabled(!simVessel.IsRCSEnabled);
                     break;
                 case AdvancedActionGroupIndexes.advancedSasAction:
                     debugString += "SAS.";
