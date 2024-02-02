@@ -169,6 +169,7 @@
         public const byte advancedAbortAction = 6;
         public const byte advancedSolarAction = 7;
         public const byte advancedRadiatorAction = 8;
+        public const byte advancedScienceAction = 9;
     };
 
     public static class ActionGroupSettings

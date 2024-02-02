@@ -18,10 +18,7 @@ using Simpit.UI;
 //TODO Support multiple serial ports
 //TODO Automatically open port on game start
 
-//TODO Add a Science Collection feature + info when science gets available 
 //TODO CameraControl
-
-//TODO Requesting FLIGHT_STATUS_MESSAGE does not seem to work
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 //TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) which is currently in use and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Should the latter be added?

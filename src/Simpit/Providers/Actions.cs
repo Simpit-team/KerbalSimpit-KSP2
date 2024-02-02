@@ -1,3 +1,4 @@
+using KSP.Game;
 using KSP.Sim;
 using KSP.Sim.impl;
 using SpaceWarp.API.Game;
@@ -416,10 +417,16 @@ namespace Simpit.Providers
                     else simVessel.TriggerActionGroup(KSPActionGroup.SolarPanels);
                     break;
                 case AdvancedActionGroupIndexes.advancedRadiatorAction:
-                    debugString += "solar.";
+                    debugString += "radiator.";
                     if (activate) simVessel.SetActionGroup(KSPActionGroup.RadiatorPanels, true);
                     else if (deactivate) simVessel.SetActionGroup(KSPActionGroup.RadiatorPanels, false);
                     else simVessel.TriggerActionGroup(KSPActionGroup.RadiatorPanels);
+                    break;
+                case AdvancedActionGroupIndexes.advancedScienceAction:
+                    debugString += "science.";
+                    if (activate) simVessel.SetActionGroup(KSPActionGroup.Science, true);
+                    else if (deactivate) simVessel.SetActionGroup(KSPActionGroup.Science, false);
+                    else simVessel.TriggerActionGroup(KSPActionGroup.Science);
                     break;
                 default:
                     break;
@@ -502,6 +509,10 @@ namespace Simpit.Providers
 
             //Move the state of each action group to it's according place in the byte array
 
+            //None = 0,
+            //True = 1,
+            //False = 2,
+            //Mixed = 3
             UInt32 state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.Gear);
             int moveBy = AdvancedActionGroupIndexes.advancedGearAction * 2;
             advancedGroups |= state << moveBy;
@@ -534,6 +545,16 @@ namespace Simpit.Providers
 
             state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.RadiatorPanels);
             moveBy = AdvancedActionGroupIndexes.advancedRadiatorAction * 2;
+            advancedGroups |= state << moveBy;
+
+            //state = (UInt32)simVessel.GetActionGroupState(KSPActionGroup.Science);
+            //The Science Action Group uses bitmasks to display if science experiments are available and if science experiments are running.
+            state = 0;
+            VesselDataProvider vesselData = GameManager.Instance.Game.ViewController.DataProvider.VesselDataProvider;
+            if (vesselData != null && vesselData.GetScienceStatusIndicatorOpportunityAvailable()) state |= 1;
+            if (vesselData != null && vesselData.GetScienceStatusIndicatorExperimentInProgress()) state |= 2;
+            SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Science state: " + state);
+            moveBy = AdvancedActionGroupIndexes.advancedScienceAction * 2;
             advancedGroups |= state << moveBy;
 
             return advancedGroups;
