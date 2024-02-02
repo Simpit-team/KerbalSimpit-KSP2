@@ -21,9 +21,6 @@ using Simpit.UI;
 //TODO Add a Science Collection feature + info when science gets available 
 //TODO CameraControl
 
-//TODO WarpControl.cs : timewarp to Next morining doesn't work
-//TODO Telemetry.cs : maneuverData and rotationData don't work, probably because the angle calculations don't work
-//TODO TargetInfo.cs: Target Heading and Target Pitch and according velocities don't work
 //TODO Requesting FLIGHT_STATUS_MESSAGE does not seem to work
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter

@@ -77,17 +77,23 @@ namespace Simpit.Providers
             {
                 if (simVessel.TargetObject != null)
                 {
-                    //if (FlightGlobals.fetch.VesselTarget.GetTransform() != null && FlightGlobals.ActiveVessel.transform != null)
-                    //{
-                        myTargetInfo.distance = (float)KSP.Sim.Position.Distance(simVessel.TargetObject.Position, simVessel.CenterOfMass);
-                        myTargetInfo.velocity = (float)simVessel.TargetVelocity.magnitude;
+                    //myTargetInfo.distance = (float)Position.Distance(simVessel.TargetObject.Position, simVessel.CenterOfMass);
+                    myTargetInfo.distance = (float)Position.Distance(simVessel.TargetObject.transform.Position, simVessel.transform.Position);
+                    myTargetInfo.velocity = (float)simVessel.TargetVelocity.magnitude;
 
-                        Vector3d targetDirection = (simVessel.TargetObject.Position - simVessel.CenterOfMass).vector;
-                        KerbalSimpitTelemetryProvider.WorldVecToNavHeading(simVessel, targetDirection, out myTargetInfo.heading, out myTargetInfo.pitch);
+                    myTargetInfo.heading = 0;
+                    myTargetInfo.pitch = 0;
+                    myTargetInfo.velocityHeading = 0;
+                    myTargetInfo.velocityPitch = 0;
 
-                        KerbalSimpitTelemetryProvider.WorldVecToNavHeading(simVessel, simVessel.TargetVelocity.vector, out myTargetInfo.velocityHeading, out myTargetInfo.velocityPitch);
-                        if (targetChannel != null) targetChannel.Fire(OutboundPackets.TargetInfo, myTargetInfo);
-                    //}
+                    //The following code was adapted from the KSP1 Simpit, but it doesn't work properly with KSP2
+                    /*
+                    Vector3d targetDirection = Position.Delta(simVessel.TargetObject.transform.Position, simVessel.transform.Position).vector;
+                    KerbalSimpitTelemetryProvider.WorldVecToNavHeading(simVessel, targetDirection, out myTargetInfo.heading, out myTargetInfo.pitch);
+
+                    KerbalSimpitTelemetryProvider.WorldVecToNavHeading(simVessel, simVessel.TargetVelocity.vector, out myTargetInfo.velocityHeading, out myTargetInfo.velocityPitch);
+                    */
+                    if (targetChannel != null) targetChannel.Fire(OutboundPackets.TargetInfo, myTargetInfo);
                 }
             }
             catch (NullReferenceException e)
