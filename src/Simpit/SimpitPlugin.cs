@@ -25,6 +25,7 @@ using Simpit.UI;
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
 //TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) which is currently in use and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Should the latter be added?
+//TODO FlightProvider.cs: There is additional athmospheric info available in KSP2 in KSP.Sim.impl.TelemetryComponent: AtmosphericHumidityPercentage, ExternalTemperature, DynamicPressure_kPa, SoundSpeed, MachNumber
 //TODO FlightProvider.cs: Get a better CommNet signal strength. KSP2 currently only offers "Has connection" or "No connection". Signal strength would have to be calculated manually. Not doing it for now.
 //TODO WarpControl.cs : New Feature: Allow Timewarp to PE and AP if they are in the next SOI.
 
@@ -274,6 +275,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<KerbalSimpitTelemetryProvider>();
         providers.AddComponent<KerbalSimpitWarpControl>();
         providers.AddComponent<KerbalSimpitNavBallProvider>();
+        providers.AddComponent<AtmoConditionProvider>();
         providers.AddComponent<FlightStatusProvider>();
         providers.AddComponent<VesselNameProvider>();
         providers.AddComponent<SOINameProvider>();
