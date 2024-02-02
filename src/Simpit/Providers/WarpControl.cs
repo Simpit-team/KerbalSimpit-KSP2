@@ -187,11 +187,13 @@ namespace Simpit.Providers
                     }
                     break;
                 case TimewarpToValues.timewarpToNextMorning:
-
                     if (simVessel.Situation == VesselSituations.Landed ||
                         simVessel.Situation == VesselSituations.Splashed ||
                         simVessel.Situation == VesselSituations.PreLaunch)
                     {
+                        SimpitPlugin.Instance.loggingQueueInfo.Enqueue("TimeToDaylight calculations are not correctly implemented yet. Cannot warp to next morning.");
+                        return;
+
                         double timeToMorning = OrbitalComputations.TimeToDaylight(simVessel.Latitude, simVessel.Longitude, simVessel.mainBody);
                         timeToWarpTo = ut + timeToMorning;
                     }
