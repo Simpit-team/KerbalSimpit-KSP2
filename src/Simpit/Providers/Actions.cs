@@ -553,7 +553,6 @@ namespace Simpit.Providers
             VesselDataProvider vesselData = GameManager.Instance.Game.ViewController.DataProvider.VesselDataProvider;
             if (vesselData != null && vesselData.GetScienceStatusIndicatorOpportunityAvailable()) state |= 1;
             if (vesselData != null && vesselData.GetScienceStatusIndicatorExperimentInProgress()) state |= 2;
-            SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Science state: " + state);
             moveBy = AdvancedActionGroupIndexes.advancedScienceAction * 2;
             advancedGroups |= state << moveBy;
 

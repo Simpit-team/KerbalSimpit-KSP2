@@ -3,7 +3,6 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using SpaceWarp;
 using SpaceWarp.API.Mods;
-using SpaceWarp.API.Logging;
 using UnityEngine;
 using KSP.Game;
 using KerbalSimpit.Serial;
@@ -13,11 +12,11 @@ using Simpit.Providers;
 using Simpit.External;
 using System.Collections.Concurrent;
 using Simpit.UI;
+using KSP.Messages;
+using BepInEx.Configuration;
 
 
 //TODO Support multiple serial ports
-//TODO Automatically open port on game start
-
 //TODO CameraControl
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
@@ -50,10 +49,11 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
     public bool config_verbose;
     int config_refreshRate;
-
     //Serial Port
     public string config_SerialPortName;
     public int config_SerialPortBaudRate;
+    public ConfigEntry<string> configEntrySeialPortName;
+    public ConfigEntry<int> configEntrySeialPortBaudRate;
     public KSPSerialPort port;
 
     //Serial Data Management
@@ -78,8 +78,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         public byte Payload;
     }
 
-    private static List<ToDeviceCallback> RegularEventList =
-            new List<ToDeviceCallback>(255);
+    private static List<ToDeviceCallback> RegularEventList = new List<ToDeviceCallback>(255);
     private bool DoEventDispatching = false;
     private Thread EventDispatchThread;
 
@@ -109,9 +108,11 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         InitProviders();
 
         MainWindowController.Init(ModGuid, ModName);
-        
+
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(SimpitPlugin).Assembly);
+
+        GameManager.Instance.Game.Messages.Subscribe<GameLoadFinishedMessage>(new Action<MessageCenterMessage>(OpenPortOnGameLoaded));
     }
 
     public void Update()
@@ -148,12 +149,12 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         // Fetch configuration values or create a default one if it does not exist
         const string defaultComPort = "COMxx";
-        var comPortValue = Config.Bind<string>("Settings section", "Serial Port Name", defaultComPort, "Which Serial Port the controller uses. E.g. COM4");
-        config_SerialPortName = comPortValue.Value;
+        configEntrySeialPortName = Config.Bind<string>("Settings section", "Serial Port Name", defaultComPort, "Which Serial Port the controller uses. E.g. COM4");
+        config_SerialPortName = configEntrySeialPortName.Value;
 
         const int defaultBaudRate = 115200;
-        var baudRateValue = Config.Bind<int>("Settings section", "Baud Rate", defaultBaudRate, "Which speed the Serial Port uses. E.g. 115200");
-        config_SerialPortBaudRate = baudRateValue.Value;
+        configEntrySeialPortBaudRate = Config.Bind<int>("Settings section", "Baud Rate", defaultBaudRate, "Which speed the Serial Port uses. E.g. 115200");
+        config_SerialPortBaudRate = configEntrySeialPortBaudRate.Value;
 
         const bool defaultVerbose = false;
         var verboseValue = Config.Bind<bool>("Settings section", "Verbose Mode", defaultVerbose, "Should verbose logs be generated");
@@ -163,10 +164,16 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         var refreshRateValue = Config.Bind<int>("Settings section", "Refresh Rate", defaultRefreshRate, "Refresh rate in milliseconds. E.g. 125");
         config_refreshRate = refreshRateValue.Value;
 
-        if(port != null) 
+        if (port != null) 
         { 
             if (port.PortName != config_SerialPortName || port.BaudRate != config_SerialPortBaudRate) port.ChangePort(config_SerialPortName, config_SerialPortBaudRate); 
         }
+    }
+
+    public void OpenPortOnGameLoaded(MessageCenterMessage msg)
+    {
+        //Try to open port on Game Start
+        OpenPort(config_SerialPortName, config_SerialPortBaudRate);
     }
 
     public void OpenPort(string portName, int baudRate)
@@ -190,18 +197,18 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         {
             if(portName.Equals("COMxx"))
             {
-                Logger.LogWarning("port name is default for port " + port.ID + ". Please provide a specific port the Simpit configs in the main menu.");
+                Logger.LogWarning("port name is default for port " + port.ID + ". Please provide a specific port in the Simpit UI or the mod configs.");
                 GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
                 {
                     Tier = NotificationTier.Passive,
-                    Primary = new NotificationLineItemData { LocKey = "Simpit: No Serial Port defined. Go to config (main menu -> mods) to set one." }
+                    Primary = new NotificationLineItemData { LocKey = "Simpit: No Serial Port defined. Go to the Simpit UI or the mod configs to set one." }
                 });
                 return;
             }
         }
         else
         {
-            Logger.LogWarning("no port name is defined for port " + port.ID + ". Please check the Simpit configs in the main menu.");
+            Logger.LogWarning("no valid port name is defined for port " + port.ID + ". Go to the Simpit UI or the mod configs to check it.");
             return;
         }
 

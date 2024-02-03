@@ -103,6 +103,9 @@ namespace KerbalSimpit.Serial
             BaudRate = newBaudRate;
             Port.PortName = newPortName;
             Port.BaudRate = newBaudRate;
+
+            SimpitPlugin.Instance.configEntrySeialPortName.BoxedValue = newPortName;
+            SimpitPlugin.Instance.configEntrySeialPortBaudRate.BoxedValue = newBaudRate;
             return true;
         }
 
