@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Runtime.InteropServices;
 using KSP.Game;
-using KSP.IO;
-using KSP.Iteration.UI.Binding;
 using KSP.Messages;
 using UnityEngine;
 using Simpit.UI;
@@ -19,6 +13,8 @@ namespace Simpit.Providers
         private EventDataObsolete<byte, object> sceneChangeEvent;
         private EventDataObsolete<byte, object> controlledVesselChangeEvent;
 
+        bool isInFlightScene = false;
+
         public void Start()
         {
             DontDestroyOnLoad(this); // Make this provider persistent
@@ -31,14 +27,11 @@ namespace Simpit.Providers
             if (customLogEvent != null) customLogEvent.Add(CustomLogCallback);
 
             sceneChangeEvent = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.SceneChange);
+            SimpitPlugin.AddToDeviceHandler(SceneChangeProvider);
+            //GameManager.Instance.Game.Messages.Subscribe<GameStateChangedMessage>(new Action<MessageCenterMessage>(OnGameStateChangedMessage));
+            //GameManager.Instance.Game.Messages.Subscribe<FlightViewEnteredMessage>(new Action<MessageCenterMessage>(OnFlightViewEnteredMessage));
+            //GameManager.Instance.Game.Messages.Subscribe<FlightViewLeftMessage>(new Action<MessageCenterMessage>(OnFlightViewLeftMessage));
             controlledVesselChangeEvent = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.VesselChange);
-
-            GameManager.Instance.Game.Messages.Subscribe<FlightViewEnteredMessage>(new Action<MessageCenterMessage>((MessageCenterMessage mess) => {
-                sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x00);
-            }));
-            GameManager.Instance.Game.Messages.Subscribe<FlightViewLeftMessage>(new Action<MessageCenterMessage>((MessageCenterMessage mess) => {
-                sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x01);
-            }));
 
             //deal with event related to a new vessel being controlled
 
@@ -99,6 +92,36 @@ namespace Simpit.Providers
             if ((logStatus & CustomLogBits.Verbose) == 0 || SimpitPlugin.Instance.config_verbose)
             {
                 SimpitPlugin.Instance.loggingQueueInfo.Enqueue(message);
+            }
+        }
+
+        public void SceneChangeProvider()
+        {
+            //Both FlightView and Map3DView can mean you are controlling a ship
+            //But the game can also be in Map3DView when in the tracking station
+            //So to see if you are actually in control of your ship, test, if the navball is visible
+            GameState currentState = GameManager.Instance.Game.GlobalGameState.GetGameState().GameState;
+            bool isinFlightOrMap = (currentState == GameState.FlightView || currentState == GameState.Map3DView);
+            bool navballVisible = false;
+            try { navballVisible = GameManager.Instance.Game.ViewController.DataProvider.IsNavballVisible.GetValue(); } catch { }
+            
+            if (isinFlightOrMap && navballVisible) //In flight
+            {
+                if (!isInFlightScene) //Was not in flight
+                {
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Scene Change to Flight");
+                    sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x00);
+                    isInFlightScene = true;
+                }
+            }
+            else //Not in flight
+            {
+                if (isInFlightScene) //Was in flight
+                {
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Scene Change exit Flight");
+                    sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x01);
+                    isInFlightScene = false;
+                }
             }
         }
     }
