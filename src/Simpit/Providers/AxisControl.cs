@@ -135,7 +135,7 @@ namespace Simpit.Providers
             if (AutopilotChannel != null) AutopilotChannel.Remove(autopilotModeCallback);
             SimpitPlugin.RemoveToDeviceHandler(SASInfoProvider);
 
-            if (lastActiveVessel != null) lastActiveVessel.Autopilot._vesselView.OnAutopilotUpdate -= AutopilotUpdater;
+            if (lastActiveVessel != null && lastActiveVessel.Autopilot != null && lastActiveVessel.Autopilot._vesselView != null) lastActiveVessel.Autopilot._vesselView.OnAutopilotUpdate -= AutopilotUpdater;
             GameManager.Instance.Game.Messages.Unsubscribe<VesselChangedMessage>(OnVesselChange);
         }
 
