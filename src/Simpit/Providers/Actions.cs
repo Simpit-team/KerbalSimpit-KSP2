@@ -388,9 +388,9 @@ namespace Simpit.Providers
                     break;
                 case AdvancedActionGroupIndexes.advancedRcsAction:
                     debugString += "RCS.";
-                    if (activate) simVessel.SetActionGroup(KSPActionGroup.RCS, true);// SetRCSEnabled(true);
-                    else if (deactivate) simVessel.SetActionGroup(KSPActionGroup.RCS, false);// SetRCSEnabled(false);
-                    else simVessel.TriggerActionGroup(KSPActionGroup.RCS);// SetRCSEnabled(!simVessel.IsRCSEnabled);
+                    if (activate) simVessel.SetRCSEnabled(true);
+                    else if (deactivate) simVessel.SetRCSEnabled(false);
+                    else simVessel.SetRCSEnabled(!simVessel.IsRCSEnabled);
                     break;
                 case AdvancedActionGroupIndexes.advancedSasAction:
                     debugString += "SAS.";
