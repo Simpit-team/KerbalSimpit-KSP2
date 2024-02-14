@@ -302,6 +302,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
         providers.AddComponent<KerbalSimpitActionProvider>();
         providers.AddComponent<KerbalSimpitTelemetryProvider>();
+        providers.AddComponent<KerbalSimpitTargetProvider>();
         providers.AddComponent<KerbalSimpitWarpControl>();
         providers.AddComponent<KerbalSimpitNavBallProvider>();
         providers.AddComponent<AtmoConditionProvider>();
@@ -335,7 +336,6 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         //providers.AddComponent<XenonECStageProvider>();
         providers.AddComponent<AblatorProvider>();
         //providers.AddComponent<AblatorStageProvider>();
-        providers.AddComponent<KerbalSimpitTargetProvider>();
     }
 
     private void StartEventDispatch()

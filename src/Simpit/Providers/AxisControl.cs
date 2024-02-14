@@ -68,7 +68,7 @@ namespace Simpit.Providers
     {
         // Inbound messages
         private EventDataObsolete<byte, object> RotationChannel, TranslationChannel,
-            WheelChannel, ThrottleChannel, CustomAxisChannel, SASInfoChannel, AutopilotChannel;
+            WheelChannel, ThrottleChannel, SASInfoChannel, AutopilotChannel; // , CustomAxisChannel
 
         private RotationalStruct myRotation, newRotation;
 

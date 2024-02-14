@@ -81,6 +81,7 @@
         public static byte AtmoCondition = 44;
         public static byte VesselName = 46;
         public static byte VesselChange = 51;
+        public static byte Intersects = 60;
     }
 
     public static class InboundPackets
