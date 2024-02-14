@@ -42,7 +42,7 @@ namespace KerbalSimpit.Serial
                 _portStatus = value;
                 if (MainWindowController.Instance != null)
                 {
-                    MainWindowController.Instance.SetConnectionStatus($"{value}".Replace("_", " "));
+                    MainWindowController.Instance.SetConnectionStatus(ID, $"{value}".Replace("_", " "));
                 }
             }
         }
@@ -67,10 +67,7 @@ namespace KerbalSimpit.Serial
         // Constructors:
         // pn: port number
         // br: baud rate
-        // idx: a unique identifier for this port
-        public KSPSerialPort(string pn, int br): this(pn, br, 37, false)
-        {
-        }
+        // idx: a unique identifier for this port and also it's position in the ports array
         public KSPSerialPort(string pn, int br, byte idx): this(pn, br, idx, false)
         {
         }
@@ -89,14 +86,14 @@ namespace KerbalSimpit.Serial
             // This does not seem to prevent communication from Arduino.
             Port.DtrEnable = true;
 
-            SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Using serial polling thread for {0}", pn));
+            SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Using serial polling thread for {0} at index {1}", pn, (int)idx));
         }
 
-        public bool ChangePort(string newPortName, int newBaudRate)
+        public bool ChangePort(int portIndex, string newPortName, int newBaudRate)
         {
             if (Port.IsOpen)
             {
-                SimpitPlugin.Instance.loggingQueueWarning.Enqueue(String.Format("Can't change port because port {0} is already open", Port.PortName));
+                SimpitPlugin.Instance.loggingQueueWarning.Enqueue(String.Format("Can't change port because port {0} at index {1} is already open", PortName, portIndex));
                 return false;
             }
             PortName = newPortName;
@@ -104,8 +101,8 @@ namespace KerbalSimpit.Serial
             Port.PortName = newPortName;
             Port.BaudRate = newBaudRate;
 
-            SimpitPlugin.Instance.configEntrySeialPortName.BoxedValue = newPortName;
-            SimpitPlugin.Instance.configEntrySeialPortBaudRate.BoxedValue = newBaudRate;
+            SimpitPlugin.Instance.configEntrySeialPortNames[portIndex].BoxedValue = newPortName;
+            SimpitPlugin.Instance.configEntrySeialPortBaudRates[portIndex].BoxedValue = newBaudRate;
             return true;
         }
 
@@ -146,7 +143,7 @@ namespace KerbalSimpit.Serial
                 }
                 catch (Exception e)
                 {
-                    SimpitPlugin.Instance.loggingQueueError.Enqueue(String.Format("Error opening serial port {0}: {1}", PortName, e.Message));
+                    SimpitPlugin.Instance.loggingQueueError.Enqueue(String.Format("Error opening serial port {0} at index {1}: {2}", PortName, (int)ID, e.Message));
 
                     // If the port was not connected to, set connected status to false
                     portStatus = ConnectionStatus.ERROR;
@@ -161,14 +158,14 @@ namespace KerbalSimpit.Serial
 
             if (Port.IsOpen)
             {
-                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Closing port {0}.", PortName));
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Closing port {0} at index {1}.", PortName, (int)ID));
                 portStatus = ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
                 Port.Close();
             } else if(portStatus == KSPSerialPort.ConnectionStatus.ERROR)
             {
-                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Closing port {0} after error.", PortName));
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Closing port {0} at index {1} after error.", PortName, (int)ID));
                 portStatus = ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
@@ -176,7 +173,7 @@ namespace KerbalSimpit.Serial
             }
             else
             {
-                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Port {0} is already closed. Don't do anything.", PortName));
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Port {0} at index {1} is already closed. Don't do anything.", PortName, (int)ID));
             }
         }
 

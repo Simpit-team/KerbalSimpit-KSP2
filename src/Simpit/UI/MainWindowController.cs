@@ -26,12 +26,13 @@ public class MainWindowController : MonoBehaviour
 
     // The elements of the window that we need to access
     private VisualElement _rootElement;
-    private TextField _serialPortField;
-    private TextField _baudRateField;
-    private Label _statusLabel;
-    private Label _debugTextLabel;
+    private VisualElement[] _portElements = new VisualElement[SimpitPlugin.MAX_NUM_PORTS];
+    private TextField[] _serialPortNameFields = new TextField[SimpitPlugin.MAX_NUM_PORTS];
+    private TextField[] _baudRateFields = new TextField[SimpitPlugin.MAX_NUM_PORTS];
+    private Label[] _statusLabels = new Label[SimpitPlugin.MAX_NUM_PORTS];
+    private Label[] _debugTextLabels = new Label[SimpitPlugin.MAX_NUM_PORTS];
 
-    private int _debugTextCounter = 0;
+    private int[] _debugTextCounters = new int[SimpitPlugin.MAX_NUM_PORTS];
 
     // The backing field for the IsWindowOpen property
     private bool _isWindowOpen = false;
@@ -155,30 +156,38 @@ public class MainWindowController : MonoBehaviour
 
         IsWindowOpen = false;
 
-        // Get the text field from the window
-        _serialPortField = _rootElement.Q<TextField>("serial-port");
-        _baudRateField = _rootElement.Q<TextField>("baud-rate");
-        _statusLabel = _rootElement.Q<Label>("connection-status");
-        _debugTextLabel = _rootElement.Q<Label>("debug-text");
-
         // Center the window by default
         _rootElement.CenterByDefault();
         //_rootElement.StopMouseEventsPropagation();
 
-        if (SimpitPlugin.Instance.port != null)
-        {
-            _serialPortField.value = SimpitPlugin.Instance.port.PortName;
-            _baudRateField.value = SimpitPlugin.Instance.port.BaudRate.ToString();
-            _statusLabel.text = $"{SimpitPlugin.Instance.port.portStatus}";
-        }
-        else
-        {
-            _serialPortField.value = SimpitPlugin.Instance.config_SerialPortName;
-            _baudRateField.value = SimpitPlugin.Instance.config_SerialPortBaudRate.ToString();
-            _statusLabel.text = "UNKNOWN";
-        }
+        
 
-        _debugTextLabel.text = DefaultDebugText;
+        for (int i = 0; i < SimpitPlugin.MAX_NUM_PORTS; i++)
+        {
+            //Get all the containers for the ports
+            _portElements[i] = _rootElement.Q<VisualElement>("port" + i);
+
+            //Remove the unused ones
+            if (i >= SimpitPlugin.Instance.ports.Length || SimpitPlugin.Instance.ports[i] == null)
+            {
+                _portElements[i].parent.Remove(_portElements[i]);
+            }
+            else
+            {
+                // Get the text fields and labels from the container
+                _serialPortNameFields[i] = _portElements[i].Q<TextField>("serial-port");
+                _baudRateFields[i] = _portElements[i].Q<TextField>("baud-rate");
+                _statusLabels[i] = _portElements[i].Q<Label>("connection-status");
+                _debugTextLabels[i] = _portElements[i].Q<Label>("debug-text");
+
+                //Set values for the ports
+                _serialPortNameFields[i].value = SimpitPlugin.Instance.ports[i].PortName;
+                _baudRateFields[i].value = SimpitPlugin.Instance.ports[i].BaudRate.ToString();
+                _statusLabels[i].text = $"{SimpitPlugin.Instance.ports[i].portStatus}";
+
+                if(_debugTextLabels[i].text == "Debug text") _debugTextLabels[i].text = DefaultDebugText;
+            }
+        }
 
         // Get the exit button from the window
         var exitButton = _rootElement.Q<Button>("exit-button");
@@ -186,46 +195,52 @@ public class MainWindowController : MonoBehaviour
 
         // Get the "Open" button from the window
         var openButton = _rootElement.Q<Button>("open-button");
-        openButton.clicked += OpenPort;
+        openButton.clicked += OpenPorts;
 
         // Get the "Close" button from the window
         var closeButton = _rootElement.Q<Button>("close-button");
-        closeButton.clicked += ClosePort;
+        closeButton.clicked += ClosePorts;
     }
 
-    private void OpenPort()
+    private void OpenPorts()
     {
-        int baudRate = 0;
-        if (Int32.TryParse(_baudRateField.value, out baudRate))
+        for (int i = 0; i < SimpitPlugin.MAX_NUM_PORTS && i < SimpitPlugin.Instance.ports.Length; i++)
         {
-            SimpitPlugin.Instance.OpenPort(_serialPortField.value, baudRate);
-        }
-        else
-        {
-            GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
+            int baudRate = 0;
+            if (Int32.TryParse(_baudRateFields[i].value, out baudRate))
             {
-                Tier = NotificationTier.Passive,
-                Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Invalid baud rate", _baudRateField.value) }
-            });
+                SimpitPlugin.Instance.OpenPort(i, _serialPortNameFields[i].value, baudRate);
+            }
+            else
+            {
+                GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
+                {
+                    Tier = NotificationTier.Passive,
+                    Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Invalid baud rate {0} at index {1}.", _baudRateFields[i].value, i) }
+                });
+            }
         }
     }
 
-    private void ClosePort()
+    private void ClosePorts()
     {
-        SimpitPlugin.Instance.ClosePort();
-        _debugTextLabel.text = DefaultDebugText;
-        _debugTextCounter = 0;
+        for (int i = 0; i < SimpitPlugin.MAX_NUM_PORTS; i++)
+        {
+            SimpitPlugin.Instance.ClosePort(i);
+            _debugTextLabels[i].text = DefaultDebugText;
+            _debugTextCounters[i] = 0;
+        }
     }
 
-    public void SetConnectionStatus(string status)
+    public void SetConnectionStatus(int portIndex, string status)
     {
-        _statusLabel.text = status;
+        _statusLabels[portIndex].text = status;
     }
 
-    public void SetDebugText(string text)
+    public void SetDebugText(int portIndex, string text)
     {
-        _debugTextCounter++;
-        _debugTextCounter %= 100;
-        _debugTextLabel.text = String.Format("{0:000}: {1}", _debugTextCounter, text);
+        _debugTextCounters[portIndex]++;
+        _debugTextCounters[portIndex] %= 1000;
+        _debugTextLabels[portIndex].text = String.Format("{0:000}: {1}", _debugTextCounters[portIndex], text);
     }
 }

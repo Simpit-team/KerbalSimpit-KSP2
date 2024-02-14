@@ -55,25 +55,25 @@ namespace Simpit.Providers
             if (customLogEvent != null) customLogEvent.Remove(CustomLogCallback);
         }
 
-        public void EchoRequestCallback(byte ID, object Data)
+        public void EchoRequestCallback(byte portID, object Data)
         {
-            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo request on port {0}. Replying.", ID));
-            SimpitPlugin.Instance.port.sendPacket(CommonPackets.EchoResponse, Data);
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo request on port index {0}. Replying.", portID));
+            SimpitPlugin.Instance.ports[portID].sendPacket(CommonPackets.EchoResponse, Data);
         }
 
         public void EchoReplyCallback(byte ID, object Data)
         {
-            SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo reply received on port {0}.", ID));
+            SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo reply received on port index {0}.", ID));
         }
 
-        public void CustomLogCallback(byte ID, object Data)
+        public void CustomLogCallback(byte portID, object Data)
         {
             byte[] payload = (byte[])Data;
 
             byte logStatus = payload[0];
             String message = System.Text.Encoding.UTF8.GetString(payload.Skip(1).ToArray());
 
-            MainWindowController.Instance.SetDebugText(message);
+            MainWindowController.Instance.SetDebugText(portID, message);
 
             if((logStatus & CustomLogBits.NoHeader) == 0)
             {

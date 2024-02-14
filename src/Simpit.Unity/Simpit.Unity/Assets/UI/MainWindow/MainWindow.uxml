@@ -1,22 +1,37 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="port" src="project://database/Assets/UI/MainWindow/port.uxml?fileID=9197481963319205126&amp;guid=db6214d715a1291479b7bce028ef4e22&amp;type=3#port" />
     <Style src="project://database/Assets/UI/MainWindow/MainWindow.uss?fileID=7433441132597879392&amp;guid=f49119c0dc6aec7469a0374f7f606ceb&amp;type=3#MainWindow" />
     <ui:VisualElement class="root" style="display: flex;">
-        <ui:VisualElement name="title-bar" style="margin-top: 0; margin-left: 0; margin-right: 0; align-items: stretch; align-self: auto; justify-content: space-between; margin-bottom: 18px; font-size: 14px;">
+        <ui:VisualElement name="title-bar" style="margin-top: 0; margin-left: 0; margin-right: 0; align-items: stretch; align-self: auto; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
             <ui:VisualElement name="icon" style="margin-bottom: 0; align-self: center; padding-bottom: 0; font-size: 14px; flex-shrink: 1; transform-origin: center;" />
             <ui:Label text="Simpit" name="title" style="margin-bottom: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; justify-content: flex-start; font-size: 20px;" />
             <ui:Button text="×" name="exit-button" style="margin-right: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; justify-content: flex-start; align-self: flex-end; font-size: 22px; border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; -unity-font-definition: url(&apos;project://database/Packages/uitkforksp2.controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Medium%20SDF.asset?fileID=11400000&amp;guid=ca4cab634f6d3284294893797c2fb994&amp;type=2#JetBrainsMono-Medium SDF&apos;);" />
         </ui:VisualElement>
         <ui:VisualElement name="content">
-            <ui:TextField picking-mode="Ignore" label="Serial Port:" name="serial-port" style="justify-content: flex-start; align-self: auto; margin-bottom: 2px;" />
-            <ui:TextField picking-mode="Ignore" label="Baud Rate:" name="baud-rate" style="justify-content: flex-start; align-self: auto; margin-top: 2px;" />
-            <ui:VisualElement name="connection-buttons" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row-reverse; padding-top: 8px; padding-bottom: 8px; justify-content: space-between;">
-                <ui:Button text="Close" name="close-button" style="flex-direction: column; flex-grow: 1; margin-left: 4px;" />
-                <ui:Button text="Open" name="open-button" style="flex-grow: 1; margin-right: 4px;" />
+            <ui:VisualElement name="connection-buttons" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row-reverse; padding-top: 0; padding-bottom: 0; justify-content: space-between;">
+                <ui:Button text="Close Ports" name="close-button" style="flex-direction: column; flex-grow: 1; margin-left: 4px; font-size: 12px;" />
+                <ui:Button text="Open Ports" name="open-button" style="flex-grow: 1; margin-right: 4px; font-size: 12px;" />
             </ui:VisualElement>
-            <ui:Label name="connection-status" text="DISCONNECTED" style="padding-left: 0; padding-right: 0; align-self: center; align-items: center; justify-content: flex-start; -unity-text-align: upper-center; -unity-font-style: normal; -unity-font-definition: url(&apos;project://database/Packages/uitkforksp2.controls/Assets/Theme/Fonts/LEDCounter7/led_counter-7%20SDF.asset?fileID=11400000&amp;guid=33e1e97b69ec355479ba49006381fc06&amp;type=2#led_counter-7 SDF&apos;); margin-top: 8px; font-size: 16px;" />
-            <ui:VisualElement name="debug-panel" style="flex-grow: 1; background-color: rgb(15, 19, 24); border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; margin-bottom: 0; padding-left: 4px; padding-right: 4px; padding-top: 4px; padding-bottom: 4px; -unity-text-align: middle-left; justify-content: space-around; align-self: auto; align-items: stretch;">
-                <ui:Label tabindex="-1" display-tooltip-when-elided="true" name="debug-text" text="Debug text" style="padding-left: 2px; padding-right: 2px; font-size: 10px; -unity-font-definition: url(&apos;project://database/Packages/uitkforksp2.controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Regular%20SDF.asset?fileID=11400000&amp;guid=f5454c9c675002c44a5a7234bd40c390&amp;type=2#JetBrainsMono-Regular SDF&apos;); display: flex; -unity-font-style: normal; -unity-text-align: middle-left; flex-wrap: nowrap; flex-direction: column; align-items: stretch; white-space: normal; padding-top: 2px; padding-bottom: 2px;" />
-            </ui:VisualElement>
+            <ui:Instance template="port" name="port0">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [0]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [0]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port1">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [1]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [1]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port2">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [2]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [2]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port3">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [3]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [3]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port4">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [4]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [4]:" />
+            </ui:Instance>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
