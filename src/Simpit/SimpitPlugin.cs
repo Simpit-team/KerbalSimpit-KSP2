@@ -15,8 +15,6 @@ using Simpit.UI;
 using KSP.Messages;
 using BepInEx.Configuration;
 
-
-//TODO Support multiple serial ports
 //TODO CameraControl
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
@@ -257,7 +255,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
     public void ClosePort(int portIndex)
     {
-        if (portIndex >= 0 && portIndex < ports.Length && ports[portIndex] == null) ports[portIndex].close();
+        if (portIndex >= 0 && portIndex < ports.Length && ports[portIndex] != null) ports[portIndex].close();
 
         //If all port are closed except this one, we can stop the event dispatching
         bool canStopEventDispatch = true;

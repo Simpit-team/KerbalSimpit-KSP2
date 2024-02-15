@@ -19,7 +19,7 @@ public class MainWindowController : MonoBehaviour
     private const string ToolbarOabButtonID = "BTN-SimpitOAB";
     private const string ToolbarKscButtonID = "BTN-SimpitKSC";
 
-    private const string DefaultDebugText = "Write text here with the 'printToKSP' function";
+    private const string DefaultDebugText = "Write here with 'printToKSP' function";
 
     // The UIDocument component of the window game object
     private UIDocument _window;
