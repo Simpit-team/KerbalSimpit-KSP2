@@ -2,10 +2,10 @@
   "spec": "2.0",
   "mod_id": "Simpit",
   "author": "Tetopia",
-  "name": "Simpit (Beta version)",
+  "name": "Simpit",
   "description": "Provides a serial connection interface for custom controllers.",
   "source": "https://github.com/Simpit-team/KerbalSimpit-KSP2",
-  "version": "0.2.1",
+  "version": "1.0.0-rc1",
   "version_check": "https://raw.githubusercontent.com/Simpit-team/KerbalSimpit-KSP2/main/plugin_template/swinfo.json",
   "ksp2_version": {
     "min": "0.2.0",
