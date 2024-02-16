@@ -2,6 +2,7 @@
 using KSP.Sim.impl;
 using SpaceWarp.API.Game;
 using KSP.Sim;
+using KSP.Game;
 
 namespace Simpit.Providers
 {
@@ -82,6 +83,11 @@ namespace Simpit.Providers
                     SimpitPlugin.AddToDeviceHandler(IntersectProvider);
                     ProviderActive = true;
                 }
+                
+                OrbitTargeter targeter = simVessel.Orbiter.OrbitTargeter;
+                PatchedConicsOrbit orbiterPatchForTarget = GetOrbiterPatchForTarget(targeter);
+                PatchedConicsOrbit targetPatch = GetTargetPatch(targeter, orbiterPatchForTarget);
+                UpdateIntersects(orbiterPatchForTarget, targetPatch, targeter._targetObject.IsVessel);
             }
             else
             {
@@ -149,11 +155,6 @@ namespace Simpit.Providers
                 myIntersectInfo = new IntersectStruct(true);
                 if (simVessel.TargetObject != null)
                 {
-                    OrbitTargeter targeter = simVessel.Orbiter.OrbitTargeter;
-
-                    intersect1 = targeter.Intersect1Orbiter;
-                    intersect2 = targeter.Intersect2Orbiter;
-
                     if (intersect1.IsValid)
                     {
                         myIntersectInfo.distanceAtIntersect1 = (float)intersect1.RelativeDistance;
@@ -180,6 +181,122 @@ namespace Simpit.Providers
                 }
             }
             catch (Exception e) { SimpitPlugin.Instance.loggingQueueError.Enqueue("Exception updating intersects: " + e.Message + "\n" + e.StackTrace); }
+        }
+
+        //Based on KSP.Sim.impl.OrbitTargeter.GetOrbiterPatchForTarget()
+        private PatchedConicsOrbit GetOrbiterPatchForTarget(OrbitTargeter targeter)
+        {
+            List<PatchedConicsOrbit> patchList;
+            int numPatchesAhead = targeter._orbiter.PatchedConicSolver.PatchesAhead;
+            int patchIndex = 0;
+            patchList = targeter._orbiter.PatchedConicSolver.CurrentTrajectory;
+            
+            PatchedConicsOrbit orbiterPatchForTarget;
+            if (targeter._targetObject.CelestialBody != null)
+            {
+                if (targeter._targetObject.CelestialBody == patchList[patchIndex].referenceBody)
+                {
+                    for (int index = patchIndex; index < numPatchesAhead; ++index)
+                    {
+                        if (targeter._targetObject.CelestialBody != patchList[index].referenceBody)
+                        {
+                            patchIndex = index;
+                            break;
+                        }
+                    }
+                }
+                if (patchIndex > 0 && targeter._targetObject.CelestialBody == patchList[patchIndex - 1].referenceBody)
+                {
+                    for (int index = patchIndex - 1; index >= 0; --index)
+                    {
+                        if (targeter._targetObject.CelestialBody != patchList[index].referenceBody)
+                        {
+                            numPatchesAhead = index;
+                            break;
+                        }
+                    }
+                }
+                while (numPatchesAhead > patchIndex && targeter._targetObject.CelestialBody == patchList[numPatchesAhead].referenceBody)
+                    --numPatchesAhead;
+                orbiterPatchForTarget = targeter.FindPatch(patchList, numPatchesAhead, patchIndex, targeter._targetObject.Orbiter.PatchedConicsOrbit.referenceBody, targeter._targetObject.CelestialBody);
+            }
+            else
+                orbiterPatchForTarget = targeter._targetObject.Vessel == null ? patchList[numPatchesAhead] : targeter.FindPatch(patchList, numPatchesAhead, patchIndex, targeter._targetObject.Orbiter.PatchedConicsOrbit.referenceBody);
+            return orbiterPatchForTarget;
+        }
+
+        //Based on KSP.Sim.impl.OrbitTargeter.GetTargetPatch()
+        private PatchedConicsOrbit GetTargetPatch(OrbitTargeter targeter, PatchedConicsOrbit orbiterPatch)
+        {
+            if (targeter._targetObject.Vessel != null && targeter._targetObject.Vessel.SimulationObject.Orbiter.PatchedConicSolver != null)
+            {
+                for (int index = 0; index <= targeter._targetObject.Vessel.SimulationObject.Orbiter.PatchedConicSolver.PatchesAhead; ++index)
+                {
+                    PatchedConicsOrbit targetPatch = targeter._targetObject.Vessel.SimulationObject.Orbiter.PatchedConicSolver.CurrentTrajectory[index];
+                    if (targetPatch.referenceBody == orbiterPatch.referenceBody)
+                        return targetPatch;
+                }
+            }
+            return targeter._targetObject.Orbiter.PatchedConicsOrbit;
+        }
+
+        //Based on KSP.Sim.impl.OrbitTargeter.UpdateIntersectNodes()
+        private void UpdateIntersects(PatchedConicsOrbit orbiterPatch, PatchedConicsOrbit targetPatch, bool targetObjectIsVessel)
+        {
+            if (orbiterPatch.referenceBody == targetPatch.referenceBody && orbiterPatch.PeApIntersects(targetPatch, 10000.0))
+            {
+                double CD = 0.0;
+                double CCD = 0.0;
+                double trueAnomaly1 = 0.0;
+                double num1 = 0.0;
+                double trueAnomaly2 = 0.0;
+                double num2 = 0.0;
+                int iterations = 0;
+                int closestPoints = orbiterPatch.FindClosestPoints(targetPatch, ref CD, ref CCD, ref trueAnomaly1, ref num1, ref trueAnomaly2, ref num2, 0.0001, 20, ref iterations);
+                double utforTrueAnomaly1 = orbiterPatch.GetUTforTrueAnomaly(trueAnomaly1, 0.0);
+                double utforTrueAnomaly2 = orbiterPatch.GetUTforTrueAnomaly(trueAnomaly2, 0.0);
+                if (utforTrueAnomaly1 > utforTrueAnomaly2)
+                {
+                    UtilMath.SwapValues(ref utforTrueAnomaly1, ref utforTrueAnomaly2);
+                    UtilMath.SwapValues(ref trueAnomaly1, ref trueAnomaly2);
+                    UtilMath.SwapValues(ref num1, ref num2);
+                }
+                double num3 = orbiterPatch.period * (double)(int)((GameManager.Instance.Game.UniverseModel.UniverseTime - utforTrueAnomaly1) / orbiterPatch.period + 1.0);
+                double universalTime1 = utforTrueAnomaly1 + num3;
+                double universalTime2 = utforTrueAnomaly2 + num3;
+                if (PatchedConics.IsUniversalTimeWithinPatchBounds(universalTime1, orbiterPatch) && (!targetObjectIsVessel || PatchedConics.IsUniversalTimeWithinPatchBounds(universalTime1, targetPatch)))
+                {
+                    double separationDistance = OrbitTargeter.GetSeparationDistance(orbiterPatch, targetPatch, universalTime1);
+                    double relativeSpeed = OrbitTargeter.GetRelativeSpeed(orbiterPatch, targetPatch, universalTime1);
+                    intersect1.Set(universalTime1, null, separationDistance, relativeSpeed, true, null);
+                }
+                else
+                {
+                    intersect1.SetInvalid();
+                }
+                if (closestPoints > 1)
+                {
+                    if (PatchedConics.IsUniversalTimeWithinPatchBounds(universalTime2, orbiterPatch) && (!targetObjectIsVessel || PatchedConics.IsUniversalTimeWithinPatchBounds(universalTime2, targetPatch)))
+                    {
+                        double separationDistance = OrbitTargeter.GetSeparationDistance(orbiterPatch, targetPatch, universalTime2);
+                        double relativeSpeed = OrbitTargeter.GetRelativeSpeed(orbiterPatch, targetPatch, universalTime2);
+                        intersect2.Set(universalTime2, null, separationDistance, relativeSpeed, true, null);
+                    }
+                    else
+                    {
+                        intersect2.SetInvalid();
+                    }
+                }
+                else
+                {
+                    intersect2.SetInvalid();
+                }
+            }
+            else
+            {
+                intersect1.SetInvalid();
+                intersect2.SetInvalid();
+            }
         }
 
         void ForceSendingIntersects(byte ID, object Data)
