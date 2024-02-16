@@ -172,7 +172,7 @@ namespace Simpit.Providers
                 {
                     resendIntersects = false;
                     if (intersectChannel != null) intersectChannel.Fire(OutboundPackets.Intersects, myIntersectInfo);
-                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("d1 {0:0}, v1 {1:0}, t1 {2:0}     d2 {3:0}, v2 {4:0}, t2 {5:0}", myIntersectInfo.distanceAtIntersect1, myIntersectInfo.velocityAtIntersect1, myIntersectInfo.timeToIntersect1, myIntersectInfo.distanceAtIntersect2, myIntersectInfo.velocityAtIntersect2, myIntersectInfo.timeToIntersect2));
+                    //SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("d1 {0:0}, v1 {1:0}, t1 {2:0}     d2 {3:0}, v2 {4:0}, t2 {5:0}", myIntersectInfo.distanceAtIntersect1, myIntersectInfo.velocityAtIntersect1, myIntersectInfo.timeToIntersect1, myIntersectInfo.distanceAtIntersect2, myIntersectInfo.velocityAtIntersect2, myIntersectInfo.timeToIntersect2));
                 }
                 else
                 {
