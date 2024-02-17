@@ -210,6 +210,8 @@ public class MainWindowController : MonoBehaviour
             if (Int32.TryParse(_baudRateFields[i].value, out baudRate))
             {
                 SimpitPlugin.Instance.OpenPort(i, _serialPortNameFields[i].value, baudRate);
+                _debugTextLabels[i].text = DefaultDebugText;
+                _debugTextCounters[i] = 0;
             }
             else
             {
@@ -227,8 +229,6 @@ public class MainWindowController : MonoBehaviour
         for (int i = 0; i < SimpitPlugin.MAX_NUM_PORTS; i++)
         {
             SimpitPlugin.Instance.ClosePort(i);
-            _debugTextLabels[i].text = DefaultDebugText;
-            _debugTextCounters[i] = 0;
         }
     }
 
