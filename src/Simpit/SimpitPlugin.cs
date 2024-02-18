@@ -292,7 +292,8 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers = new GameObject();
         providers.AddComponent<KerbalSimpitEchoProvider>();
         
-        providers.AddComponent<KerbalSimpitAxisController>();
+        KerbalSimpitAxisController axisController = providers.AddComponent<KerbalSimpitAxisController>();
+        KerbalSimpitAxisController.EVAInputHandlerPatch.simpitAxisController = axisController;
         providers.AddComponent<RotationCommandProvider>();
         providers.AddComponent<TranslationCommandProvider>();
         providers.AddComponent<WheelCommandProvider>();

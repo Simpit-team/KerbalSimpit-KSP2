@@ -1,13 +1,14 @@
 ﻿using KSP.Sim.impl;
 using KSP.Sim.State;
 using KSP.Sim;
-using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Simpit.Utilities;
 using SpaceWarp.API.Game;
 using KSP.Game;
 using KSP.Messages;
+using HarmonyLib;
+using KSP;
 
 namespace Simpit.Providers
 {
@@ -225,8 +226,7 @@ namespace Simpit.Providers
                 autopilot.SetMode(mySASMode);
                 if (SimpitPlugin.Instance.config_verbose) 
                 {
-                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("payload is {0}", mySASMode));
-                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("SAS mode is {0}", autopilot.AutopilotMode.ToString()));
+                    SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("SAS mode is {0} (payload was {1})", autopilot.AutopilotMode.ToString(), (int)payload[0]));
                 }
             }
             else
@@ -267,6 +267,92 @@ namespace Simpit.Providers
             //simVessel.ApplyFlightCtrlState(fcsi);
         }
         
+        [HarmonyPatch(typeof(EVAInputHandler), "FixedUpdate")]
+        public class EVAInputHandlerPatch
+        {
+            public static KerbalSimpitAxisController simpitAxisController;
+            static bool Prefix()
+            {
+                //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("EVAInputHandlerPatch.FixedUpdate");
+
+                bool runOriginalFixedUpdate = true;
+                bool translationHasInput = false;
+                bool rotationHasInput = false;
+                if (GameManager.Instance.Game.ViewController == null) return runOriginalFixedUpdate;
+                EVAInputHandler thisEvaInputHandler = GameManager.Instance.Game.ViewController.evaInputHandler;
+                if (thisEvaInputHandler == null) return runOriginalFixedUpdate;
+
+                if (simpitAxisController.myRotation.pitch != 0) rotationHasInput = true;
+                if (simpitAxisController.myRotation.roll != 0) rotationHasInput = true;
+                if (simpitAxisController.myRotation.yaw != 0) rotationHasInput = true;
+                if (simpitAxisController.myTranslation.X != 0) translationHasInput = true;
+                if (simpitAxisController.myTranslation.Y != 0) translationHasInput = true;
+                if (simpitAxisController.myTranslation.Z != 0) translationHasInput = true;
+                
+                if(!translationHasInput && !rotationHasInput) return runOriginalFixedUpdate; //No inputs from Simpit -> Do original FixedUpdate
+                runOriginalFixedUpdate = false; 
+
+                FlightCtrlState oldfcs = thisEvaInputHandler._flightCtrlState;
+                byte playerId = GameManager.Instance.Game.LocalPlayer.PlayerId;
+                ViewController viewController = thisEvaInputHandler.Game.ViewController;
+                IVehicle activeVehicle;
+                if (viewController == null || !viewController.TryGetActiveVehicle(out activeVehicle, true) || !activeVehicle.CanPlayerControl(playerId))
+                    return runOriginalFixedUpdate;
+                VesselComponent simVessel = activeVehicle.GetSimVessel();
+                KerbalComponent kerbal = simVessel.SimulationObject.Kerbal;
+                KerbalBehavior behaviorIfLoaded = thisEvaInputHandler.Game.ViewController.GetBehaviorIfLoaded(kerbal);
+                if (!simVessel.IsKerbalEVA || kerbal == null || !(behaviorIfLoaded != null))
+                    return runOriginalFixedUpdate;
+                bool flag = !viewController.TimeWarp.IsWarping || viewController.TimeWarp.IsPhysicsTimeWarp;
+                if ((!(!viewController.IsPaused & flag) ? 0 : (behaviorIfLoaded.IsInputAllowed() ? 1 : 0)) != 0)
+                {
+                    //Match the ship translation axes (that's why y and z are swapped here)
+                    if (translationHasInput)
+                    {
+                        thisEvaInputHandler._flightCtrlState.X = ((float)simpitAxisController.myTranslation.X / Int16.MaxValue);
+                        thisEvaInputHandler._flightCtrlState.Y = ((float)simpitAxisController.myTranslation.Z / Int16.MaxValue);
+                        thisEvaInputHandler._flightCtrlState.Z = (-(float)simpitAxisController.myTranslation.Y / Int16.MaxValue);
+                    }
+                    thisEvaInputHandler._flightCtrlState.inputYaw = thisEvaInputHandler._moveStrafeLeftRight;
+                    thisEvaInputHandler._flightCtrlState.inputPitch = 0.0f;
+                    thisEvaInputHandler._flightCtrlState.inputRoll = 0.0f;
+                    if (rotationHasInput)
+                    {
+                        thisEvaInputHandler._flightCtrlState.pitch = (float)simpitAxisController.myRotation.pitch / Int16.MaxValue;
+                        thisEvaInputHandler._flightCtrlState.roll  = (float)simpitAxisController.myRotation.roll  / Int16.MaxValue;
+                        thisEvaInputHandler._flightCtrlState.yaw   = (float)simpitAxisController.myRotation.yaw   / Int16.MaxValue;
+                    }
+                    thisEvaInputHandler._flightCtrlState.gearUp = thisEvaInputHandler._run;
+                    thisEvaInputHandler._flightCtrlState.stage = thisEvaInputHandler._jump;
+                    /* Original content in the FixedUpdate
+                    thisEvaInputHandler._flightCtrlState.X = thisEvaInputHandler._moveLeftRight;
+                    thisEvaInputHandler._flightCtrlState.Y = thisEvaInputHandler._moveUpDown;
+                    thisEvaInputHandler._flightCtrlState.Z = thisEvaInputHandler._moveFrontBack;
+                    thisEvaInputHandler._flightCtrlState.inputYaw = thisEvaInputHandler._moveStrafeLeftRight;
+                    thisEvaInputHandler._flightCtrlState.inputPitch = 0.0f;
+                    thisEvaInputHandler._flightCtrlState.inputRoll = 0.0f;
+                    thisEvaInputHandler._flightCtrlState.yaw = thisEvaInputHandler._rotateYaw;
+                    thisEvaInputHandler._flightCtrlState.pitch = thisEvaInputHandler._rotatePitch;
+                    thisEvaInputHandler._flightCtrlState.roll = thisEvaInputHandler._rotateRoll;
+                    thisEvaInputHandler._flightCtrlState.gearUp = thisEvaInputHandler._run;
+                    thisEvaInputHandler._flightCtrlState.stage = thisEvaInputHandler._jump;
+                    */
+                }
+                else
+                    thisEvaInputHandler.ResetInput((VesselComponent)null);
+                if (thisEvaInputHandler._flightCtrlState != oldfcs)
+                {
+                    simVessel.SetFlightControlState(thisEvaInputHandler._flightCtrlState);
+                    // Store the last flight command to send them in the dedicated channels
+                    simpitAxisController.lastFlightCtrlState = new FlightCtrlState(thisEvaInputHandler._flightCtrlState);
+                }
+                else
+                    thisEvaInputHandler._flightCtrlState = simVessel.flightCtrlState;
+
+                return runOriginalFixedUpdate;
+            }
+        }
+
         public void forceSendingSASInfo(byte ID, object Data)
         {
             _forceSendingSASInfo = true;
