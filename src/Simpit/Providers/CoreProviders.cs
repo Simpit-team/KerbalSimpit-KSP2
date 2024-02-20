@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Runtime.InteropServices;
 using KSP.Game;
-using KSP.IO;
-using KSP.Iteration.UI.Binding;
 using KSP.Messages;
 using UnityEngine;
+using Simpit.UI;
 
 namespace Simpit.Providers
 {
@@ -18,7 +13,7 @@ namespace Simpit.Providers
         private EventDataObsolete<byte, object> sceneChangeEvent;
         private EventDataObsolete<byte, object> controlledVesselChangeEvent;
 
-        public ConcurrentQueue<NotificationData> notificationQueue = new ConcurrentQueue<NotificationData>();
+        bool isInFlightScene = false;
 
         public void Start()
         {
@@ -32,10 +27,11 @@ namespace Simpit.Providers
             if (customLogEvent != null) customLogEvent.Add(CustomLogCallback);
 
             sceneChangeEvent = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.SceneChange);
+            SimpitPlugin.AddToDeviceHandler(SceneChangeProvider);
+            //GameManager.Instance.Game.Messages.Subscribe<GameStateChangedMessage>(new Action<MessageCenterMessage>(OnGameStateChangedMessage));
+            //GameManager.Instance.Game.Messages.Subscribe<FlightViewEnteredMessage>(new Action<MessageCenterMessage>(OnFlightViewEnteredMessage));
+            //GameManager.Instance.Game.Messages.Subscribe<FlightViewLeftMessage>(new Action<MessageCenterMessage>(OnFlightViewLeftMessage));
             controlledVesselChangeEvent = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.VesselChange);
-
-            GameEvents.onFlightReady.Add(FlightReadyHandler);
-            GameEvents.onGameSceneSwitchRequested.Add(FlightShutdownHandler);
 
             //deal with event related to a new vessel being controlled
 
@@ -52,45 +48,32 @@ namespace Simpit.Providers
             }));
         }
 
-        public void Update()
-        {
-            if (!notificationQueue.IsEmpty)
-            {
-                NotificationData notification;
-                notificationQueue.TryDequeue(out notification);
-                GameManager.Instance.Game.Notifications.ProcessNotification(notification);
-            }
-        }
-
         public void OnDestroy()
         {
             if (echoRequestEvent != null) echoRequestEvent.Remove(EchoRequestCallback);
             if (echoReplyEvent != null) echoReplyEvent.Remove(EchoReplyCallback);
             if (customLogEvent != null) customLogEvent.Remove(CustomLogCallback);
-
-            GameEvents.onFlightReady.Remove(FlightReadyHandler);
-            GameEvents.onGameSceneSwitchRequested.Remove(FlightShutdownHandler);
         }
 
-        public void EchoRequestCallback(byte ID, object Data)
+        public void EchoRequestCallback(byte portID, object Data)
         {
-            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo(String.Format("Echo request on port {0}. Replying.", ID));
-            SimpitPlugin.Instance.port.sendPacket(CommonPackets.EchoResponse, Data);
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo request on port index {0}. Replying.", portID));
+            SimpitPlugin.Instance.ports[portID].sendPacket(CommonPackets.EchoResponse, Data);
         }
 
         public void EchoReplyCallback(byte ID, object Data)
         {
-            SimpitPlugin.Instance.Logger.LogInfo(String.Format("Echo reply received on port {0}.", ID));
+            SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Echo reply received on port index {0}.", ID));
         }
 
-        public void CustomLogCallback(byte ID, object Data)
+        public void CustomLogCallback(byte portID, object Data)
         {
             byte[] payload = (byte[])Data;
 
             byte logStatus = payload[0];
             String message = System.Text.Encoding.UTF8.GetString(payload.Skip(1).ToArray());
 
-            SimpitGui.SetDebugText(message);
+            MainWindowController.Instance.SetDebugText(portID, message);
 
             if((logStatus & CustomLogBits.NoHeader) == 0)
             {
@@ -99,7 +82,7 @@ namespace Simpit.Providers
 
             if ((logStatus & CustomLogBits.PrintToScreen) != 0)
             {
-                notificationQueue.Enqueue(new NotificationData
+                SimpitPlugin.Instance.notificationQueue.Enqueue(new NotificationData
                 {
                     Tier = NotificationTier.Passive,
                     Primary = new NotificationLineItemData { LocKey = message }
@@ -108,25 +91,36 @@ namespace Simpit.Providers
             
             if ((logStatus & CustomLogBits.Verbose) == 0 || SimpitPlugin.Instance.config_verbose)
             {
-                SimpitPlugin.Instance.Logger.LogInfo(message);
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(message);
             }
         }
 
-        private void FlightReadyHandler()
+        public void SceneChangeProvider()
         {
-            if (sceneChangeEvent != null)
+            //Both FlightView and Map3DView can mean you are controlling a ship
+            //But the game can also be in Map3DView when in the tracking station
+            //So to see if you are actually in control of your ship, test, if the navball is visible
+            GameState currentState = GameManager.Instance.Game.GlobalGameState.GetGameState().GameState;
+            bool isinFlightOrMap = (currentState == GameState.FlightView || currentState == GameState.Map3DView);
+            bool navballVisible = false;
+            try { navballVisible = GameManager.Instance.Game.ViewController.DataProvider.IsNavballVisible.GetValue(); } catch { }
+            
+            if (isinFlightOrMap && navballVisible) //In flight
             {
-                sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x00);
-            }
-        }
-
-        private void FlightShutdownHandler(GameEvents.FromToAction<GameScenes, GameScenes> scenes)
-        {
-            if (scenes.from == GameScenes.FLIGHT)
-            {
-                if (sceneChangeEvent != null)
+                if (!isInFlightScene) //Was not in flight
                 {
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Scene Change to Flight");
+                    sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x00);
+                    isInFlightScene = true;
+                }
+            }
+            else //Not in flight
+            {
+                if (isInFlightScene) //Was in flight
+                {
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Scene Change exit Flight");
                     sceneChangeEvent.Fire(OutboundPackets.SceneChange, 0x01);
+                    isInFlightScene = false;
                 }
             }
         }

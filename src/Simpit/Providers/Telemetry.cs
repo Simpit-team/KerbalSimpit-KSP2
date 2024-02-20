@@ -1,3 +1,4 @@
+using KSP.Api;
 using KSP.Game;
 using KSP.Messages.PropertyWatchers;
 using KSP.Sim.DeltaV;
@@ -226,7 +227,7 @@ namespace Simpit.Providers
         // Convert a direction given in world space v into a heading and a pitch, relative to the vessel passed as a paramater
         public static void WorldVecToNavHeading(VesselComponent activeVessel, Vector3d v, out float heading, out float pitch)
         {
-            KSP.Sim.Position CoM = activeVessel.CenterOfMass;
+            KSP.Sim.Position CoM = activeVessel.transform.Position;
             Vector3d north, up, east;
             up = (CoM - activeVessel.mainBody.Position).vector.normalized;
             north = Vector3d.Exclude(up, ((activeVessel.mainBody.Position + activeVessel.mainBody.transform.up * (float)activeVessel.mainBody.radius) - CoM).vector).normalized;
@@ -249,26 +250,33 @@ namespace Simpit.Providers
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
             if (simVessel == null) return;
 
-
+            //The following code was adapted from the KSP1 Simpit, but it doesn't work properly with KSP2
             // Code from KSPIO to compute angles and velocities https://github.com/zitron-git/KSPSerialIO/blob/062d97e892077ea14737f5e79268c0c4d067f5b6/KSPSerialIO/KSPIO.cs#L929-L971
-            KSP.Sim.Position CoM = simVessel.CenterOfMass;
-            Vector3d north, up, east;
-            up = (CoM - simVessel.mainBody.Position).vector.normalized;
-            north = Vector3d.Exclude(up, ((simVessel.mainBody.Position + simVessel.mainBody.transform.up * (float)simVessel.mainBody.radius) - CoM).vector).normalized;
-            east = Vector3d.Cross(up, north);
+            //KSP.Sim.Position CoM = simVessel.transform.Position;
+            //Vector3d north, up, east;
+            //up = (CoM - simVessel.mainBody.Position).vector.normalized;
+            //north = Vector3d.Exclude(up, ((simVessel.mainBody.Position + simVessel.mainBody.transform.up * (float)simVessel.mainBody.radius) - CoM).vector).normalized;
+            //east = Vector3d.Cross(up, north);
 
-            Vector3d attitude = Quaternion.Inverse(Quaternion.Euler(90, 0, 0) * Quaternion.Inverse(Vehicle.ActiveVesselVehicle.Rotation.localRotation) * Quaternion.LookRotation(north, up)).eulerAngles;
-            
-            myRotation.roll = (float) ((attitude.z > 180) ? (attitude.z - 360.0) : attitude.z);
-            myRotation.pitch = (float) ((attitude.x > 180) ? (360.0 - attitude.x) : -attitude.x);
-            myRotation.heading = (float) attitude.y;
+            //Vector3d attitude = Quaternion.Inverse(Quaternion.Euler(90, 0, 0) * Quaternion.Inverse(Vehicle.ActiveVesselVehicle.Rotation.localRotation) * Quaternion.LookRotation(north, up)).eulerAngles;
+            //myRotation.roll = (float) ((attitude.z > 180) ? (attitude.z - 360.0) : attitude.z);
+            //myRotation.pitch = (float) ((attitude.x > 180) ? (360.0 - attitude.x) : -attitude.x);
+            //myRotation.heading = (float) attitude.y;
 
-            WorldVecToNavHeading(simVessel, simVessel.SurfaceVelocity.vector.normalized, out myRotation.surfaceVelocityHeading, out myRotation.surfaceVelocityPitch);
+            //Trying to use the builtin KSP2 values, but roll seems to be off by the value of pitch ?!?
+            myRotation.roll = (float)simVessel.Roll_HorizonRelative;
+            myRotation.pitch = (float)simVessel.Pitch_HorizonRelative;
+            myRotation.heading = (float)simVessel.Yaw_HorizonRelative;
+
+            //WorldVecToNavHeading(simVessel, simVessel.SurfaceVelocity.vector.normalized, out myRotation.surfaceVelocityHeading, out myRotation.surfaceVelocityPitch);
+            //WorldVecToNavHeading(simVessel, simVessel.OrbitalVelocity.vector.normalized, out myRotation.orbitalVelocityHeading, out myRotation.orbitalVelocityPitch);
+
+            //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Rotation: Roll " + myRotation.roll.ToString("0.0") + ", Pitch " + myRotation.pitch.ToString("0.0") + ", Hdg " + myRotation.heading.ToString("0.0") + ", SV Hdg " + myRotation.surfaceVelocityHeading.ToString("0.0") + ", SV Pitch " + myRotation.surfaceVelocityPitch.ToString("0.0") + ", OV Hdg " + myRotation.orbitalVelocityHeading.ToString("0.0") + ", OV Pitch " + myRotation.orbitalVelocityPitch.ToString("0.0"));
 
             if (rotationChannel != null) rotationChannel.Fire(OutboundPackets.RotationData, myRotation);
         }
 
-            public void OrbitInfoProvider()
+        public void OrbitInfoProvider()
         {
             VesselComponent simVessel = null;
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
@@ -389,32 +397,31 @@ namespace Simpit.Providers
             //KSP1 if (FlightGlobals.ActiveVessel.patchedConicSolver != null)
             {
                 List<ManeuverNodeData> maneuvers = simVessel.Orbiter.SimulationObject.ManeuverPlan.GetNodes();
-                if (maneuvers != null)
-                //KSP1 if (FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes != null)
+                if (maneuvers != null && maneuvers.Count > 0)
                 {
-                    if(maneuvers.Count > 0)
+                    double ut = GameManager.Instance.Game.SpaceSimulation.UniverseModel.UniverseTime;
+                    myManeuver.timeToNextManeuver = (float)(maneuvers[0].Time - ut);
+                    myManeuver.deltaVNextManeuver = (float)maneuvers[0].BurnRequiredDV;
+
+                    //The following code was adapted from the KSP1 Simpit, but it doesn't work properly with KSP2
+                    //Vector3d TargetOrientation = simVessel.Autopilot.SAS.ReferenceFrame.ToLocalVector(simVessel.Autopilot._telemetry.ManeuverDirection);
+                    //WorldVecToNavHeading(simVessel, TargetOrientation, out myManeuver.headingNextManeuver, out myManeuver.pitchNextManeuver);
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue(" Maneuver HDG: " + myManeuver.headingNextManeuver + " Pitch: " + myManeuver.pitchNextManeuver);
+
+                    //This is stuff I tried, but I didn't find the right vectors and reference frames
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Maneuver Direction: " + simVessel.Autopilot._telemetry.ManeuverDirection.vector);
+                    //simVessel.Autopilot.SAS.PitchYawAngle((ICoordinateSystem)simVessel.ControlTransform.bodyFrame, simVessel.Autopilot._telemetry.ManeuverDirection.vector, out float maneuverHdg, out float maneuverPitch);
+                    //simVessel.Autopilot.SAS.PitchYawAngle((ICoordinateSystem)simVessel.Autopilot.SAS.ReferenceFrame, simVessel.Autopilot._telemetry.ManeuverDirection.vector, out float maneuverHdg, out float maneuverPitch);
+                    //simVessel.Autopilot.SAS.PitchYawAngle(simVessel.mainBody.coordinateSystem, TargetOrientation, out float maneuverPitch, out float maneuverHdg);
+                    //simVessel.Autopilot.SAS.PitchYawAngle(simVessel._telemetryComponent.rootTransformInternal.bodyFrame, simVessel.Autopilot._telemetry.ManeuverDirection.vector, out float maneuverHdg, out float maneuverPitch);
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("TargetOrientation: " + TargetOrientation);
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("HDG: " + maneuverHdg + " Pitch: " + maneuverPitch);
+                    
+                    myManeuver.durationNextManeuver = (float)maneuvers[0].BurnDuration;
+                    
+                    foreach (ManeuverNodeData maneuver in maneuvers)
                     {
-                        double ut = GameManager.Instance.Game.SpaceSimulation.UniverseModel.UniverseTime;
-                        myManeuver.timeToNextManeuver = (float)(maneuvers[0].Time - ut);
-                        myManeuver.deltaVNextManeuver = (float)maneuvers[0].BurnRequiredDV;
-
-                        WorldVecToNavHeading(simVessel, maneuvers[0].BurnVector, out myManeuver.headingNextManeuver, out myManeuver.pitchNextManeuver);
-
-                        DeltaVStageInfo currentStageInfo = getCurrentStageDeltaV();
-                        if (currentStageInfo != null)
-                        {
-                            //KSP1 Old method, use a simple crossmultiplication to compute the estimated burn time based on the current stage only
-                            //KSP1 myManeuver.durationNextManeuver = (float)(maneuvers[0].DeltaV.magnitude * currentStageInfo.stageBurnTime) / currentStageInfo.deltaVActual;
-
-                            //KSP1 The estimation based on the startBurnIn seems to be more accurate than using the previous method of crossmultiplication
-                            //KSP1 myManeuver.durationNextManeuver = (float)((maneuvers[0].Time - ut - maneuvers[0].startBurnIn) * 2);
-                            myManeuver.durationNextManeuver = (float)maneuvers[0].BurnDuration;
-                        }
-
-                        foreach (ManeuverNodeData maneuver in maneuvers)
-                        {
-                            myManeuver.deltaVTotal += (float)maneuver.BurnRequiredDV;
-                        }
+                        myManeuver.deltaVTotal += (float)maneuver.BurnRequiredDV;
                     }
                 }
             }

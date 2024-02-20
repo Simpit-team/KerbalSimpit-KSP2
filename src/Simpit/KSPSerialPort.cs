@@ -2,6 +2,7 @@
 
 using System.IO.Ports;
 using Simpit;
+using Simpit.UI;
 
 namespace KerbalSimpit.Serial
 {
@@ -32,7 +33,19 @@ namespace KerbalSimpit.Serial
             ERROR, // The port could not be openned.
         }
 
-        public ConnectionStatus portStatus;
+        private ConnectionStatus _portStatus;
+        public ConnectionStatus portStatus
+        {
+            get => _portStatus;
+            set
+            {
+                _portStatus = value;
+                if (MainWindowController.Instance != null)
+                {
+                    MainWindowController.Instance.SetConnectionStatus(ID, $"{value}".Replace("_", " "));
+                }
+            }
+        }
 
         private readonly object queueLock = new object();
         private Queue<byte[]> packetQueue = new Queue<byte[]>();
@@ -54,10 +67,7 @@ namespace KerbalSimpit.Serial
         // Constructors:
         // pn: port number
         // br: baud rate
-        // idx: a unique identifier for this port
-        public KSPSerialPort(string pn, int br): this(pn, br, 37, false)
-        {
-        }
+        // idx: a unique identifier for this port and also it's position in the ports array
         public KSPSerialPort(string pn, int br, byte idx): this(pn, br, idx, false)
         {
         }
@@ -76,20 +86,24 @@ namespace KerbalSimpit.Serial
             // This does not seem to prevent communication from Arduino.
             Port.DtrEnable = true;
 
-            SimpitPlugin.Instance.Logger.LogInfo(String.Format("Using serial polling thread for {0}", pn));
+            SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Using serial polling thread for {0} at index {1}", pn, (int)idx));
         }
 
-        public void ChangePort(string newPortName, int newBaudRate)
+        public bool ChangePort(int portIndex, string newPortName, int newBaudRate)
         {
             if (Port.IsOpen)
             {
-                SimpitPlugin.Instance.Logger.LogWarning(String.Format("Can't change port because port {0} is already open", Port.PortName));
-                return;
+                SimpitPlugin.Instance.loggingQueueWarning.Enqueue(String.Format("Can't change port because port {0} at index {1} is already open", PortName, portIndex));
+                return false;
             }
             PortName = newPortName;
             BaudRate = newBaudRate;
             Port.PortName = newPortName;
             Port.BaudRate = newBaudRate;
+
+            SimpitPlugin.Instance.configEntrySeialPortNames[portIndex].BoxedValue = newPortName;
+            SimpitPlugin.Instance.configEntrySeialPortBaudRates[portIndex].BoxedValue = newBaudRate;
+            return true;
         }
 
         // Open the serial port
@@ -107,29 +121,29 @@ namespace KerbalSimpit.Serial
                     //Start the threads separately, otherwise the game freezes
                     SerialReadThread = new Thread(SerialPollingWorker);
                     SerialReadThread.Start();
-                    //SimpitPlugin.Instance.Logger.LogDebug("Starting Read Thread");
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Starting Read Thread");
                     //TODO Does this while statement make the game freeze sometimes?
                     while (!SerialReadThread.IsAlive)
                     {
-                        //SimpitPlugin.Instance.Logger.LogDebug(".");
+                        //SimpitPlugin.Instance.loggingQueueDebug.Enqueue(".");
                         //Thread.Sleep(100);
                     }
-                    //SimpitPlugin.Instance.Logger.LogDebug("Read Thread started");
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Read Thread started");
 
                     SerialWriteThread = new Thread(SerialWriteQueueRunner);
                     SerialWriteThread.Start();
-                    //SimpitPlugin.Instance.Logger.LogDebug("Starting Write Thread");
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Starting Write Thread");
                     //TODO Does this while statement make the game freeze sometimes?;
                     while (!SerialWriteThread.IsAlive)
                     {
-                        //SimpitPlugin.Instance.Logger.LogDebug(".");
+                        //SimpitPlugin.Instance.loggingQueueDebug.Enqueue(".");
                         //Thread.Sleep(100);
                     }
-                    //SimpitPlugin.Instance.Logger.LogDebug("Write Thread started");
+                    //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Write Thread started");
                 }
                 catch (Exception e)
                 {
-                    SimpitPlugin.Instance.Logger.LogError(String.Format("Error opening serial port {0}: {1}", PortName, e.Message));
+                    SimpitPlugin.Instance.loggingQueueError.Enqueue(String.Format("Error opening serial port {0} at index {1}: {2}", PortName, (int)ID, e.Message));
 
                     // If the port was not connected to, set connected status to false
                     portStatus = ConnectionStatus.ERROR;
@@ -144,22 +158,22 @@ namespace KerbalSimpit.Serial
 
             if (Port.IsOpen)
             {
-                SimpitPlugin.Instance.Logger.LogInfo(String.Format("Closing port {0}.", PortName));
-                portStatus = KSPSerialPort.ConnectionStatus.CLOSED;
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Closing port {0} at index {1}.", PortName, (int)ID));
+                portStatus = ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
                 Port.Close();
             } else if(portStatus == KSPSerialPort.ConnectionStatus.ERROR)
             {
-                SimpitPlugin.Instance.Logger.LogInfo(String.Format("Closing port {0} after error.", PortName));
-                portStatus = KSPSerialPort.ConnectionStatus.CLOSED;
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Closing port {0} at index {1} after error.", PortName, (int)ID));
+                portStatus = ConnectionStatus.CLOSED;
                 DoSerial = false;
                 Thread.Sleep(500);
                 Port.Close();
             }
             else
             {
-                SimpitPlugin.Instance.Logger.LogInfo(String.Format("Port {0} is already closed. Don't do anything.", PortName));
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Port {0} at index {1} is already closed. Don't do anything.", PortName, (int)ID));
             }
         }
 
@@ -178,7 +192,7 @@ namespace KerbalSimpit.Serial
             }
             finally
             {
-                portStatus = KSPSerialPort.ConnectionStatus.ERROR;
+                portStatus = ConnectionStatus.ERROR;
             }
         }
 
@@ -372,7 +386,7 @@ namespace KerbalSimpit.Serial
 
             if(buf.Length > MaxPayloadSize)
             {
-                SimpitPlugin.Instance.Logger.LogWarning("packet of type " + Type + " too big. Truncating it");
+                SimpitPlugin.Instance.loggingQueueWarning.Enqueue("packet of type " + Type + " too big. Truncating it");
                 buf = buf.Take(MaxPayloadSize).ToArray();
             }
 
@@ -391,7 +405,7 @@ namespace KerbalSimpit.Serial
         {
             lock (queueLock)
             {
-                SimpitPlugin.Instance.Logger.LogInfo("I'm removing " + packetQueue.Count() + " messages from the queue.");
+                SimpitPlugin.Instance.loggingQueueInfo.Enqueue("I'm removing " + packetQueue.Count() + " messages from the queue.");
                 packetQueue.Clear();
             }
         }
@@ -449,19 +463,19 @@ namespace KerbalSimpit.Serial
                 {
                     try
                     {
-                        SimpitPlugin.Instance.Logger.LogInfo("Sending " + String.Join<byte>(",", dequeued));
+                        //if(SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Sending " + String.Join<byte>(",", dequeued));
                         Port.Write(dequeued, 0, dequeued.Length);
                         dequeued = null;
                     }
                     catch
                     {
-                        //SimpitPlugin.Instance.Logger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
+                        //SimpitPlugin.Instance.loggingQueueError.Enqueue(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                         handleError();
                     }
                 }
             };
 
-            //SimpitPlugin.Instance.Logger.LogInfo(String.Format("Starting write thread for port {0}", PortName));
+            //SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Starting write thread for port {0}", PortName));
             while (DoSerial)
             {
                 SerialWrite();
@@ -471,7 +485,7 @@ namespace KerbalSimpit.Serial
                     portStatus = ConnectionStatus.IDLE;
                 }
             }
-            //SimpitPlugin.Instance.Logger.LogInfo(String.Format("Write thread for port {0} exiting.", PortName));
+            //SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Write thread for port {0} exiting.", PortName));
         }
         
         private void SerialPollingWorker()
@@ -490,23 +504,23 @@ namespace KerbalSimpit.Serial
                 }
                 catch
                 {
-                    //SimpitPlugin.Instance.Logger.LogError(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
+                    //SimpitPlugin.Instance.loggingQueueError.Enqueue(String.Format("IOException in serial worker for {0}: {1}", PortName, exc.ToString()));
                     handleError();
                 }
                 Thread.Sleep(10); // TODO: Tune this.
             };
-            //SimpitPlugin.Instance.Logger.LogInfo(String.Format("Starting poll thread for port {0}", PortName));
+            //SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Starting poll thread for port {0}", PortName));
             while (DoSerial)
             {
                 SerialRead();
             }
-            //SimpitPlugin.Instance.Logger.LogInfo(String.Format("Poll thread for port {0} exiting.", PortName));
+            //SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Poll thread for port {0} exiting.", PortName));
         }
 
         // Handle data read in worker thread. Copy data to the PayloadBuffer and when a null byte is read, decode it.
         private void ReceivedDataEvent(byte[] ReadBuffer, int BufferLength)
         {
-            //SimpitPlugin.Instance.Logger.LogDebug("Received " + BufferLength + " bytes.");
+            //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Received " + BufferLength + " bytes.");
 
             for (int x=0; x<BufferLength; x++)
             {
@@ -517,7 +531,7 @@ namespace KerbalSimpit.Serial
                 {
                     if(PayloadBuffer[0] == 0xAA && PayloadBuffer[1] == 0x50)
                     {
-                        //SimpitPlugin.Instance.Logger.LogWarning("received an ill-formatted message that look like it uses a previous Simpit version. You should update your Arduino lib");
+                        //SimpitPlugin.Instance.loggingQueueWarning.Enqueue("received an ill-formatted message that look like it uses a previous Simpit version. You should update your Arduino lib");
                     }
 
                     byte packetType;
@@ -526,12 +540,12 @@ namespace KerbalSimpit.Serial
 
                     if (validMsg)
                     {
-                        //SimpitPlugin.Instance.Logger.LogDebug("receveived valid packet of type " + packetType + " with payload " + payload[0]);
+                        //SimpitPlugin.Instance.loggingQueueDebug.Enqueue("receveived valid packet of type " + packetType + " with payload " + payload[0]);
                         OnPacketReceived(packetType, payload, (byte) payload.Length);
                     } else
                     {
-                        //SimpitPlugin.Instance.Logger.LogInfo("discarding an ill-formatted message of size " + CurrentBytesRead);
-                        //SimpitPlugin.Instance.Logger.LogInfo("[" + String.Join<byte>(",", PayloadBuffer.Take(CurrentBytesRead).ToArray()) + "]");
+                        //SimpitPlugin.Instance.loggingQueueInfo.Enqueue("discarding an ill-formatted message of size " + CurrentBytesRead);
+                        //SimpitPlugin.Instance.loggingQueueInfo.Enqueue("[" + String.Join<byte>(",", PayloadBuffer.Take(CurrentBytesRead).ToArray()) + "]");
                     }
 
                     CurrentBytesRead = 0;

@@ -29,12 +29,12 @@ namespace Simpit.Utilities
                 ResourceDefinitionDatabase resourceDatabase = GameManager.Instance.Game.ResourceDefinitionDatabase;
                 if (!resourceDatabase.IsDefinitionDataFrozen)
                 {
-                    SimpitPlugin.Instance.Logger.LogDebug("The resource database isn't ready yet. Try again later.");
+                    SimpitPlugin.Instance.loggingQueueDebug.Enqueue("The resource database isn't ready yet. Try again later.");
                     return;
                 }
                 foreach (ResourceDefinitionID resourceId in resourceDatabase.GetAllResourceIDs())
                 {
-                    SimpitPlugin.Instance.Logger.LogDebug("Registering resource \"" + resourceDatabase.GetResourceNameFromID(resourceId) + "\" with id \"" + resourceId + "\".");
+                    SimpitPlugin.Instance.loggingQueueDebug.Enqueue("Registering resource \"" + resourceDatabase.GetResourceNameFromID(resourceId) + "\" with id \"" + resourceId + "\".");
                 }
             }
             catch { }

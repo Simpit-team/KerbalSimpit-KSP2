@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="port" src="project://database/Assets/UI/MainWindow/port.uxml?fileID=9197481963319205126&amp;guid=db6214d715a1291479b7bce028ef4e22&amp;type=3#port" />
+    <Style src="project://database/Assets/UI/MainWindow/MainWindow.uss?fileID=7433441132597879392&amp;guid=f49119c0dc6aec7469a0374f7f606ceb&amp;type=3#MainWindow" />
+    <ui:VisualElement class="root" style="display: flex;">
+        <ui:VisualElement name="title-bar" style="margin-top: 0; margin-left: 0; margin-right: 0; align-items: stretch; align-self: auto; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
+            <ui:VisualElement name="icon" style="margin-bottom: 0; align-self: center; padding-bottom: 0; font-size: 14px; flex-shrink: 1; transform-origin: center;" />
+            <ui:Label text="Simpit" name="title" style="margin-bottom: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; justify-content: flex-start; font-size: 20px;" />
+            <ui:Button text="×" name="exit-button" style="margin-right: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; justify-content: flex-start; align-self: flex-end; font-size: 22px; border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; -unity-font-definition: url(&apos;project://database/Packages/uitkforksp2.controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Medium%20SDF.asset?fileID=11400000&amp;guid=ca4cab634f6d3284294893797c2fb994&amp;type=2#JetBrainsMono-Medium SDF&apos;);" />
+        </ui:VisualElement>
+        <ui:VisualElement name="content">
+            <ui:VisualElement name="connection-buttons" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row-reverse; padding-top: 0; padding-bottom: 0; justify-content: space-between;">
+                <ui:Button text="Close Ports" name="close-button" style="flex-direction: column; flex-grow: 1; margin-left: 4px; font-size: 12px;" />
+                <ui:Button text="Open Ports" name="open-button" style="flex-grow: 1; margin-right: 4px; font-size: 12px;" />
+            </ui:VisualElement>
+            <ui:Instance template="port" name="port0">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [0]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [0]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port1">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [1]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [1]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port2">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [2]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [2]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port3">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [3]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [3]:" />
+            </ui:Instance>
+            <ui:Instance template="port" name="port4">
+                <AttributeOverrides element-name="serial-port" label="Serial Port [4]:" />
+                <AttributeOverrides element-name="baud-rate" label="Baud Rate [4]:" />
+            </ui:Instance>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

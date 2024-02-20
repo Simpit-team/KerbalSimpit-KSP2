@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -7,7 +8,9 @@ using KSP.Sim;
 using KSP.Sim.impl;
 using Simpit;
 using SpaceWarp.API.Game;
+using SpaceWarp.API.Game.Extensions;
 using UnityEngine;
+using static RTG.CameraFocus;
 
 namespace Simpit.Providers
 {
@@ -48,19 +51,23 @@ namespace Simpit.Providers
         }
 
         private EventDataObsolete<byte, object> enableChannel, disableChannel,
-            toggleChannel;
+            toggleChannel, CAGSetSingleChannel;
+        //Using a queue here in case the controller rapidly sets multiple action groups in succession
+        //to avoid the buffer being overwritten before it can be applied to the game
+        private volatile ConcurrentQueue<byte> setSingleBuffer = new ConcurrentQueue<byte>();
 
         // Outbound messages
-        private EventDataObsolete<byte, object> CAGStateChannel;
+        private EventDataObsolete<byte, object> CAGStateChannel, AdvancedCAGStateChannel;
 
         //private static bool AGXPresent;
         //private static Type AGXExternal;
 
         private CAGStatusStruct lastCAGStatus;
+        private UInt32 lastAdvancedCAGStatus;
 
         // If set to true, the state should be sent at the next update even if no changes
         // are detected (for instance to initialise it after a new registration).
-        private bool resendState = false;
+        private bool resendState, resendAdvancedState = false;
 
         private static KSPActionGroup[] ActionGroupIDs = new KSPActionGroup[] {
             KSPActionGroup.None,
@@ -79,7 +86,7 @@ namespace Simpit.Providers
         public void Start()
         {
             //AGXPresent = AGXInstalled();
-            //if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.Logger.LogInfo(String.Format("ActionGroupsExtended installed: {0}", AGXPresent));
+            //if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("ActionGroupsExtended installed: {0}", AGXPresent));
 
             enableChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + InboundPackets.CAGEnable);
             if (enableChannel != null) enableChannel.Add(enableCAGCallback);
@@ -87,9 +94,13 @@ namespace Simpit.Providers
             if (disableChannel != null) disableChannel.Add(disableCAGCallback);
             toggleChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + InboundPackets.CAGToggle);
             if (toggleChannel != null) toggleChannel.Add(toggleCAGCallback);
+            CAGSetSingleChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialReceived" + +InboundPackets.SetSingleCAG);
+            if (CAGSetSingleChannel != null) CAGSetSingleChannel.Add(actionSetSingleCallback);
 
             CAGStateChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.CustomActionGroups);
             GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialChannelForceSend" + OutboundPackets.CustomActionGroups).Add(resendActionGroup);
+            AdvancedCAGStateChannel = GameEvents.FindEvent<EventDataObsolete<byte, object>>("toSerial" + OutboundPackets.AdvancedCustomActionGroups);
+            GameEvents.FindEvent<EventDataObsolete<byte, object>>("onSerialChannelForceSend" + OutboundPackets.AdvancedCustomActionGroups).Add(resendAdvancedActionGroup);
 
             lastCAGStatus = new CAGStatusStruct();
         }
@@ -99,6 +110,7 @@ namespace Simpit.Providers
             if (enableChannel != null) enableChannel.Remove(enableCAGCallback);
             if (disableChannel != null) disableChannel.Remove(disableCAGCallback);
             if (toggleChannel != null) toggleChannel.Remove(toggleCAGCallback);
+            if (CAGSetSingleChannel != null) CAGSetSingleChannel.Remove(actionSetSingleCallback);
         }
 
         private bool UpdateCurrentState()
@@ -109,9 +121,28 @@ namespace Simpit.Providers
                 resendState = false;
                 if (CAGStateChannel != null)
                 {
-                    //SimpitPlugin.Instance.Logger.LogInfo(String.Format("Sending CAG status : (" + newState.status[0] + ") (" + newState.status[1] + ") "));
+                    //SimpitPlugin.Instance.loggingQueueInfo.Enqueue(String.Format("Sending CAG status : (" + newState.status[0] + ") (" + newState.status[1] + ") "));
                     CAGStateChannel.Fire(OutboundPackets.CustomActionGroups, newState);
                     lastCAGStatus = newState;
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private bool UpdateAdvancedCurrentState()
+        {
+            UInt32 newState = getAdvancedCAGState();
+            if (!newState.Equals(lastAdvancedCAGStatus) || resendAdvancedState)
+            {
+                resendAdvancedState = false;
+                if (AdvancedCAGStateChannel != null)
+                {
+                    AdvancedCAGStateChannel.Fire(OutboundPackets.AdvancedCustomActionGroups, newState);
+                    lastAdvancedCAGStatus = newState;
                 }
                 return true;
             }
@@ -126,9 +157,21 @@ namespace Simpit.Providers
             resendState = true;
         }
 
+        public void resendAdvancedActionGroup(byte ID, object Data)
+        {
+            resendAdvancedState = true;
+        }
+
         public void Update()
         {
             UpdateCurrentState();
+            UpdateAdvancedCurrentState();
+
+            byte actionGroupAndSetting;
+            while (!setSingleBuffer.IsEmpty && setSingleBuffer.TryDequeue(out actionGroupAndSetting))
+            {
+                setSingleGroup(actionGroupAndSetting);
+            }
         }
 
         /*
@@ -227,6 +270,40 @@ namespace Simpit.Providers
             }
         }
 
+        public void actionSetSingleCallback(byte ID, object Data)
+        {
+            byte[] payload = (byte[])Data;
+            setSingleBuffer.Enqueue(payload[0]);
+        }
+
+        private void setSingleGroup(byte actionGroupAndSetting)
+        {
+            VesselComponent simVessel = null;
+            try { simVessel = Vehicle.ActiveSimVessel; } catch { }
+            if (simVessel == null) return;
+
+            //Bitmask the first six bits as which action group to use and the last two bits as what to do with said action group
+            int actionGroupIndex = (actionGroupAndSetting & 0b11111100) >> 2;
+            KSPActionGroup actionGroup = ActionGroupIDs[actionGroupIndex];
+            byte actionSetting = (byte)(actionGroupAndSetting & 0b00000011);
+
+            bool activate = (actionSetting == ActionGroupSettings.activate);
+            bool deactivate = (actionSetting == ActionGroupSettings.deactivate);
+            bool toggle = (actionSetting == ActionGroupSettings.toggle);
+
+            string debugString;
+            if (activate) debugString = "Activate action group ";
+            else if (deactivate) debugString = "Deactivate action group ";
+            else debugString = "Toggle action group ";
+            debugString += actionGroup.ToString();
+            if (SimpitPlugin.Instance.config_verbose) SimpitPlugin.Instance.loggingQueueInfo.Enqueue(debugString);
+
+            if (activate) simVessel.SetActionGroup(actionGroup, true);
+            else if (deactivate) simVessel.SetActionGroup(actionGroup, false);
+            else simVessel.TriggerActionGroup(actionGroup);
+        }
+
+
         private CAGStatusStruct getCAGState()
         {
             CAGStatusStruct result = new CAGStatusStruct();
@@ -259,6 +336,30 @@ namespace Simpit.Providers
             }
             */
             return result;
+        }
+
+        private UInt32 getAdvancedCAGState()
+        {
+            VesselComponent simVessel = null;
+            try
+            {
+                simVessel = Vehicle.ActiveSimVessel;
+            }
+            catch { return 0; }
+            if (simVessel == null) return 0;
+
+            UInt32 advancedGroups = 0;
+
+            //Move the state of each action group to it's according place in the byte array
+
+            for(int i = 1; i < ActionGroupIDs.Length; i++) //Ignoring 0 since there is no Action Group 0
+            {
+                UInt32 state = (UInt32)simVessel.GetActionGroupState(ActionGroupIDs[i]);
+                int moveBy = i * 2; //move by 2 bits for each group
+                advancedGroups |= state << moveBy;
+            }
+
+            return advancedGroups;
         }
     }
 }

@@ -9,46 +9,19 @@ using KerbalSimpit.Serial;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Simpit.Providers;
-using SpaceWarp.API.Logging;
 using Simpit.External;
+using System.Collections.Concurrent;
+using Simpit.UI;
+using KSP.Messages;
+using BepInEx.Configuration;
 
-
-//TODO Support multiple serial ports
-//TODO Automatically open port on game start
-//TODO Add a Science Collection feature + info when science gets available 
 //TODO CameraControl
 
 //TODO Why are the EventData now called EventDataObsolete? Possible solution: Replace EventDataObsolete and GameEvents.XYZ with Messages and MessageCenter
-
-//TODO AxisControl.cs : Test the outbound messages. The CommandProviders probably have to be added somewhere?
-//TODO Is VesselChangedMessage the correct message to fire controlledVesselChangeEvent.Fire(OutboundPackets.VesselChange, VesselChangeValues.switching) ? In KSP 1 it fired on GameEvents.onVesselSwitching but there is no VesselSwitchedMessage in KSP2
-//TODO FlightProvider.cs: For FlightStatusBits.isInFlight was HighLogic.LoadedSceneIsFlight used which is deprecated. Test if simVessel.IsVesselInFlight() also works
-//TODO FlightProvider.cs: Does the crew count work correctly?
-//TODO Check if the onFlightReady and the onGameSceneSwitchRequested events are fired correctly.
-//TODO Telemetry.cs : Please check/test especially airspeed, maneuverData, rotationData 
-//TODO Resources.cs : Test Ablator per Stage. It might not work because the per stage calculation only looks at fuel
-//TODO TargetInfo.cs: Test the TargetProvider
-//TODO Does the scene change notification stuff work?
-//TODO FlightProvider.cs: Get a better CommNet signal strength. Is there something like that in KSP2? Can it be calculated by antennas and distance?
-
-//TODO WarpControl.cs : Timewarp to PE goes past the Pe if Pe is in another SOI (e.g. going to the mun)
-//TODO WarpControl.cs : warp levels are different between KSP2 and KSP1 how to handle that?
-//TODO WarpControl.cs : timewarp to Next morining doesn't work
-
-//TODO Arduino lib - Resources.cs : Implement other resources: OutboundPackets 52 to 62
-//TODO Add RadiatorPanels Action group. This is the ninth Action group so all the action group messages need a second byte of payload
-//TODO For the Action groups there is now the state "mixed", e.g. if only some lights are on, others are off. Should the mixed state be counted as on or off? Or is there a possibility to also send the mixed state?
-//TODO FlightProvider.cs: what about the FlightStatusBits.isInAtmoTW? I currently have it sending tw.IsPhysicsTimeWarp
-//TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Which one should we use?
-//TODO FlightProvider.cs: the vesselType (debris, rover, probe, ship, ...) does not seem to exist in KSP2 the closest is the MapItemType.
-//TODO FlightProvider.cs: Test the currentStage. It sends -1
-
-//TODO Two more new messages for action groups: SetSingleActionGroup and FeedbackValue (On, Off, Mixed) on all three sides (Arduino, KSP1, KSP2)
-//Extend define of action groups: 6 bits for addr of action group  2 bits for state on,off,mixed,notAvailable
-//                                                                 2 bits for on,off,toggle
-//Wrapper functions for arduino
-
-//TODO Work on an Arduino side that can test all the features. Should come in handy when I have to update the KSP2 side. Could also come in handy as an example to show how to use all the functions.
+//TODO FlightProvider.cs: There is the simVessel.ControlStatus (which is a VesselControlState, it has NoControl, NoCommNet, FullControlHibernation, FullControl) which is currently in use and there is simVessel._commandControlState (which is a CommandControlState , it has Disabled, NothEnoughCrew, NotEnoughResources, NoCommnetConnection, Hibernating, FullyFunctional). Should the latter be added?
+//TODO FlightProvider.cs: There is additional athmospheric info available in KSP2 in KSP.Sim.impl.TelemetryComponent: AtmosphericHumidityPercentage, ExternalTemperature, DynamicPressure_kPa, SoundSpeed, MachNumber
+//TODO FlightProvider.cs: Get a better CommNet signal strength. KSP2 currently only offers "Has connection" or "No connection". Signal strength would have to be calculated manually. Not doing it for now.
+//TODO WarpControl.cs : New Feature: Allow Timewarp to PE and AP if they are in the next SOI.
 
 namespace Simpit;
 
@@ -65,16 +38,21 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
     // Singleton instance of the plugin class
     [PublicAPI] public static SimpitPlugin Instance { get; set; }
-    internal new SpaceWarp.API.Logging.ILogger Logger = new UnityLogSource(ModName);
-    SimpitGui gui = new SimpitGui();
+    //Using queues for thread safe logging
+    public ConcurrentQueue<string> loggingQueueInfo = new ConcurrentQueue<string>();
+    public ConcurrentQueue<string> loggingQueueDebug = new ConcurrentQueue<string>();
+    public ConcurrentQueue<string> loggingQueueWarning = new ConcurrentQueue<string>();
+    public ConcurrentQueue<string> loggingQueueError = new ConcurrentQueue<string>();
+    public ConcurrentQueue<NotificationData> notificationQueue = new ConcurrentQueue<NotificationData>();
 
     public bool config_verbose;
     int config_refreshRate;
-
-    //Serial Port
-    public string config_SerialPortName;
-    public int config_SerialPortBaudRate;
-    public KSPSerialPort port;
+    //Serial Ports
+    public ConfigEntry<int> configEntryNumPorts;
+    public const int MAX_NUM_PORTS = 5;
+    public ConfigEntry<string>[] configEntrySeialPortNames;
+    public ConfigEntry<int>[] configEntrySeialPortBaudRates;
+    public KSPSerialPort[] ports;
 
     //Serial Data Management
     // To receive events from serial devices on channel i,
@@ -98,12 +76,9 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         public byte Payload;
     }
 
-    private static List<ToDeviceCallback> RegularEventList =
-            new List<ToDeviceCallback>(255);
+    private static List<ToDeviceCallback> RegularEventList = new List<ToDeviceCallback>(255);
     private bool DoEventDispatching = false;
     private Thread EventDispatchThread;
-
-
 
     /// <summary>
     /// Runs when the mod is first initialized.
@@ -112,40 +87,92 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         base.OnInitialized();
 
-        Assembly ass = Assembly.LoadFile(Path.Combine(PluginFolderPath, "assets", "lib", "System.ComponentModel.Primitives.dll"));
+        Assembly ass = Assembly.LoadFile(Path.Combine(SWMetadata.Folder.FullName, "assets", "lib", "System.ComponentModel.Primitives.dll"));
         Logger.LogDebug("Loaded dll: " + ass.ToString());
-        ass = Assembly.LoadFile(Path.Combine(PluginFolderPath, "assets", "lib", "System.IO.Ports.dll"));
+        ass = Assembly.LoadFile(Path.Combine(SWMetadata.Folder.FullName, "assets", "lib", "System.IO.Ports.dll"));
         Logger.LogDebug("Loaded dll: " + ass.ToString());
 
         Instance = this;
 
         ReadConfig();
 
-        // Log the config value into <KSP2 Root>/BepInEx/LogOutput.log
-        Logger.LogInfo($"Using Serial Port \"{config_SerialPortName}\" with Baud Rate \"{config_SerialPortBaudRate}\"");
-
+        for (int i = 0; i < configEntryNumPorts.Value; i++)
+        {
+            // Log the config value into <KSP2 Root>/BepInEx/LogOutput.log
+            Logger.LogInfo($"Using Serial Port \"{configEntrySeialPortNames[i].Value}\" with Baud Rate \"{configEntrySeialPortBaudRates[i].Value}\" at index " + i + ".");
+        }
         //Initialize everything needed for Serial
         InitSerial();
 
         //Initialize everything needed for the Providers
         InitProviders();
 
-        gui.InitGui();
-        
+        //Initialize the GUI
+        MainWindowController.Init(ModGuid, ModName);
+
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(SimpitPlugin).Assembly);
+
+        GameManager.Instance.Game.Messages.Subscribe<GameLoadFinishedMessage>(new Action<MessageCenterMessage>(OpenPortOnGameLoaded));
+    }
+
+    public void Update()
+    {
+        if (!notificationQueue.IsEmpty)
+        {
+            notificationQueue.TryDequeue(out NotificationData notification);
+            GameManager.Instance.Game.Notifications.ProcessNotification(notification);
+        }
+
+        while (!loggingQueueInfo.IsEmpty)
+        {
+            loggingQueueInfo.TryDequeue(out string log);
+            Logger.LogInfo(log);
+        }
+        while (!loggingQueueDebug.IsEmpty)
+        {
+            loggingQueueDebug.TryDequeue(out string log);
+            Logger.LogDebug(log);
+        }
+        while (!loggingQueueWarning.IsEmpty)
+        {
+            loggingQueueWarning.TryDequeue(out string log);
+            Logger.LogWarning(log);
+        }
+        while (!loggingQueueError.IsEmpty)
+        {
+            loggingQueueError.TryDequeue(out string log);
+            Logger.LogError(log);
+        }
     }
 
     public void ReadConfig()
     {
         // Fetch configuration values or create a default one if it does not exist
-        const string defaultComPort = "COMxx";
-        var comPortValue = Config.Bind<string>("Settings section", "Serial Port Name", defaultComPort, "Which Serial Port the controller uses. E.g. COM4");
-        config_SerialPortName = comPortValue.Value;
+        const int defaultNumPorts = 1;
+        configEntryNumPorts = Config.Bind<int>("Settings section", "Number of active serial ports", defaultNumPorts, "Restart game when chaning this number. How many controllers can be connected at the same time. Maximum " + MAX_NUM_PORTS + ".");
+        if(configEntryNumPorts.Value < 1) configEntryNumPorts.BoxedValue = 1;
+        if(configEntryNumPorts.Value > MAX_NUM_PORTS) configEntryNumPorts.BoxedValue = MAX_NUM_PORTS;
 
-        const int defaultBaudRate = 115200;
-        var baudRateValue = Config.Bind<int>("Settings section", "Baud Rate", defaultBaudRate, "Which speed the Serial Port uses. E.g. 115200");
-        config_SerialPortBaudRate = baudRateValue.Value;
+        configEntrySeialPortNames = new ConfigEntry<string>[configEntryNumPorts.Value];
+        configEntrySeialPortBaudRates = new ConfigEntry<int>[configEntryNumPorts.Value];
+        ports = new KSPSerialPort[configEntryNumPorts.Value];
+        for (int i = 0; i < configEntryNumPorts.Value; i++)
+        {
+            const string defaultComPort = "COMxx";
+            configEntrySeialPortNames[i] = Config.Bind<string>("Settings section", "Serial Port Name " + i, defaultComPort, "Which Serial Port the controller with index " + i + " uses. E.g. COM4");
+            string portName = configEntrySeialPortNames[i].Value;
+
+            const int defaultBaudRate = 115200;
+            configEntrySeialPortBaudRates[i] = Config.Bind<int>("Settings section", "Baud Rate " + i, defaultBaudRate, "Which speed the Serial Port with index " + i + " uses. E.g. 115200");
+            int baudRate = configEntrySeialPortBaudRates[i].Value;
+
+            if (ports[i] == null) ports[i] = new KSPSerialPort(portName, baudRate, (byte)i);
+            else
+            {
+                if (ports[i].PortName != portName || ports[i].BaudRate != baudRate) ports[i].ChangePort(i, portName, baudRate);
+            }
+        }
 
         const bool defaultVerbose = false;
         var verboseValue = Config.Bind<bool>("Settings section", "Verbose Mode", defaultVerbose, "Should verbose logs be generated");
@@ -154,70 +181,71 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         const int defaultRefreshRate = 125;
         var refreshRateValue = Config.Bind<int>("Settings section", "Refresh Rate", defaultRefreshRate, "Refresh rate in milliseconds. E.g. 125");
         config_refreshRate = refreshRateValue.Value;
+    }
 
-        if(port != null) 
-        { 
-            if (port.PortName != config_SerialPortName || port.BaudRate != config_SerialPortBaudRate) port.ChangePort(config_SerialPortName, config_SerialPortBaudRate); 
+    public void OpenPortOnGameLoaded(MessageCenterMessage msg)
+    {
+        //Try to open ports on Game Start
+        for (int i = 0; i < ports.Length; i++)
+        {
+            OpenPort(i, ports[i].PortName, ports[i].BaudRate);
         }
     }
-    private void OnGUI()
-    {
-        gui.OnGui();
-    }
 
-    public void OpenPort()
+    public void OpenPort(int portIndex, string portName, int baudRate)
     {
-        if (port.portStatus != KSPSerialPort.ConnectionStatus.CLOSED && port.portStatus != KSPSerialPort.ConnectionStatus.ERROR)
+        if (portIndex < 0 || portIndex >= ports.Length || ports[portIndex] == null) return;
+
+        if (ports[portIndex].portStatus != KSPSerialPort.ConnectionStatus.CLOSED && ports[portIndex].portStatus != KSPSerialPort.ConnectionStatus.ERROR)
         {
             //Port already opened. Nothing to do.
-            Logger.LogInfo(String.Format("Port {0} already opened. Nothing to do.", port.PortName));
+            Logger.LogInfo(String.Format("Port {0} at index {1} in port list already opened. Nothing to do.", ports[portIndex].PortName, portIndex));
 
             GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
             {
                 Tier = NotificationTier.Passive,
-                Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Port {0} already opened.Nothing to do.", port.PortName) }
+                Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Port {0} at index {1} already opened. Nothing to do.", ports[portIndex].PortName, portIndex) }
             });
             return;
         }
 
-        String portName = port.PortName;
         if (portName.StartsWith("COM") || portName.StartsWith("/"))
         {
             if(portName.Equals("COMxx"))
             {
-                Logger.LogWarning("port name is default for port " + port.ID + ". Please provide a specific port the Simpit configs in the main menu.");
+                Logger.LogWarning("port name is default for port at index " + portIndex + ". Please provide a specific port in the Simpit UI or the mod configs.");
                 GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
                 {
                     Tier = NotificationTier.Passive,
-                    Primary = new NotificationLineItemData { LocKey = "Simpit: No Serial Port defined. Go to config (main menu -> mods) to set one." }
+                    Primary = new NotificationLineItemData { LocKey = "Simpit: No Serial Port defined at index " + portIndex + ". Go to the Simpit UI or the mod configs to set one." }
                 });
                 return;
             }
         }
         else
         {
-            Logger.LogWarning("no port name is defined for port " + port.ID + ". Please check the Simpit configs in the main menu.");
+            Logger.LogWarning("no valid port name is defined for port at index " + portIndex + ". Go to the Simpit UI or the mod configs to check it.");
             return;
         }
 
-        if (port.open())
+        if (ports[portIndex].ChangePort(portIndex, portName, baudRate) && ports[portIndex].open())
         {
-            Logger.LogInfo(String.Format("Opened port {0}", portName));
+            Logger.LogInfo("Opened port " + portName + " at index " + portIndex + ".");
 
             GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
             {
                 Tier = NotificationTier.Passive,
-                Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Opened port {0}", portName) }
+                Primary = new NotificationLineItemData { LocKey = "Opened port " + portName + " at index " + portIndex + "." }
             });
         }
         else
         {
-            Logger.LogInfo(String.Format("Unable to open port {0}", portName));
+            Logger.LogInfo("Unable to open port " + portName + " at index " + portIndex + ".");
 
             GameManager.Instance.Game.Notifications.ProcessNotification(new NotificationData
             {
                 Tier = NotificationTier.Passive,
-                Primary = new NotificationLineItemData { LocKey = String.Format("Simpit: Unable to open port {0}", portName) }
+                Primary = new NotificationLineItemData { LocKey = "Simpit: Unable to open port " + portName + " at index " + portIndex + "." }
             });
         }
 
@@ -225,19 +253,26 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             StartEventDispatch();
     }
 
-    public void ClosePort()
+    public void ClosePort(int portIndex)
     {
-        if (port == null) return;
+        if (portIndex >= 0 && portIndex < ports.Length && ports[portIndex] != null) ports[portIndex].close();
 
-        port.close();
+        //If all port are closed except this one, we can stop the event dispatching
+        bool canStopEventDispatch = true;
+        foreach (KSPSerialPort p in ports)
+        {
+            if (p.portStatus != KSPSerialPort.ConnectionStatus.CLOSED && p.portStatus != KSPSerialPort.ConnectionStatus.ERROR)
+            {
+                canStopEventDispatch = false;
+                break;
+            }
+        }
+        if (canStopEventDispatch) DoEventDispatching = false;
     }
 
     // Method that inits the ports. Will only be called once to initialize them when starting the mod.
     private void InitSerial()
     {
-        //Create the serial port
-        port = new KSPSerialPort(config_SerialPortName, config_SerialPortBaudRate);
-
         for (int i = 254; i >= 0; i--)
         {
             this.onSerialReceivedArray[i] = new EventDataObsolete<byte, object>(String.Format("onSerialReceived{0}", i));
@@ -256,12 +291,23 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
     {
         providers = new GameObject();
         providers.AddComponent<KerbalSimpitEchoProvider>();
-        providers.AddComponent<KerbalSimpitAxisController>();
+        
+        KerbalSimpitAxisController axisController = providers.AddComponent<KerbalSimpitAxisController>();
+        KerbalSimpitAxisController.EVAInputHandlerPatch.simpitAxisController = axisController;
+        providers.AddComponent<RotationCommandProvider>();
+        providers.AddComponent<TranslationCommandProvider>();
+        providers.AddComponent<WheelCommandProvider>();
+        providers.AddComponent<ThrottleCommandProvider>();
+
         providers.AddComponent<KerbalSimpitActionProvider>();
         providers.AddComponent<KerbalSimpitTelemetryProvider>();
+        providers.AddComponent<KerbalSimpitTargetProvider>();
         providers.AddComponent<KerbalSimpitWarpControl>();
         providers.AddComponent<KerbalSimpitNavBallProvider>();
+        providers.AddComponent<AtmoConditionProvider>();
         providers.AddComponent<FlightStatusProvider>();
+        providers.AddComponent<VesselNameProvider>();
+        providers.AddComponent<SOINameProvider>();
         providers.AddComponent<KerbalSimpitCAGProvider>();
         providers.AddComponent<KeyboardEmulator>();
 
@@ -269,7 +315,7 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<SolidFuelProvider>();
         providers.AddComponent<SolidFuelStageProvider>();
         providers.AddComponent<IntakeAirProvider>();
-        providers.AddComponent<TestRocksProvider>();
+        //providers.AddComponent<TestRocksProvider>();
         providers.AddComponent<EvaPropellantProvider>();
         providers.AddComponent<HydrogenProvider>();
         providers.AddComponent<HydrogenStageProvider>();
@@ -277,19 +323,18 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         providers.AddComponent<LiquidFuelStageProvider>();
         providers.AddComponent<OxidizerProvider>();
         providers.AddComponent<OxidizerStageProvider>();
-        providers.AddComponent<MethaloxProvider>();
-        providers.AddComponent<MethaloxStageProvider>();
-        providers.AddComponent<MethaneAirProvider>();
-        providers.AddComponent<MethaneAirStageProvider>();
+        //providers.AddComponent<MethaloxProvider>();
+        //providers.AddComponent<MethaloxStageProvider>();
+        //providers.AddComponent<MethaneAirProvider>();
+        //providers.AddComponent<MethaneAirStageProvider>();
         providers.AddComponent<UraniumProvider>();
         providers.AddComponent<ElectricChargeProvider>();
         providers.AddComponent<XenonGasProvider>();
         providers.AddComponent<XenonGasStageProvider>();
-        providers.AddComponent<XenonECProvider>();
-        providers.AddComponent<XenonECStageProvider>();
+        //providers.AddComponent<XenonECProvider>();
+        //providers.AddComponent<XenonECStageProvider>();
         providers.AddComponent<AblatorProvider>();
-        providers.AddComponent<AblatorStageProvider>();
-        providers.AddComponent<KerbalSimpitTargetProvider>();
+        //providers.AddComponent<AblatorStageProvider>();
     }
 
     private void StartEventDispatch()
@@ -352,34 +397,34 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         switch (payload[0])
         {
             case 0x00:
-                if (config_verbose) Logger.LogInfo(String.Format("SYN received on port {0}. Replying.", port.PortName));
+                if (config_verbose) Logger.LogInfo(String.Format("SYN received on port {0} at index {1}. Replying.", ports[portID].PortName, (int)portID));
 
                 //When handshake is started, unregister all channels to avoid duplication of messages when new channels are subscribed after an Arduino reset
                 for (int idx = 0; idx < 255; idx++)
                 {
-                    toSerialArray[idx].Remove(port.sendPacket);
+                    toSerialArray[idx].Remove(ports[portID].sendPacket);
                 }
                 // Remove all messages not yet sent to make sure the next message sent is an SYNACK
-                port.clearSendingQueue();
+                ports[portID].clearSendingQueue();
 
-                port.portStatus = KSPSerialPort.ConnectionStatus.HANDSHAKE;
+                ports[portID].portStatus = KSPSerialPort.ConnectionStatus.HANDSHAKE;
                 hs.HandShakeType = 0x01;
-                port.sendPacket(CommonPackets.Synchronisation, hs);
+                ports[portID].sendPacket(CommonPackets.Synchronisation, hs);
                 break;
             case 0x01:
-                if (config_verbose) Logger.LogInfo(String.Format("SYNACK received on port {0}. Replying.", port.PortName));
-                port.portStatus = KSPSerialPort.ConnectionStatus.CONNECTED;
+                if (config_verbose) Logger.LogInfo(String.Format("SYNACK received on port {0} at index {1}. Replying.", ports[portID].PortName, (int)portID));
+                ports[portID].portStatus = KSPSerialPort.ConnectionStatus.CONNECTED;
                 hs.HandShakeType = 0x02;
-                port.sendPacket(CommonPackets.Synchronisation, hs);
+                ports[portID].sendPacket(CommonPackets.Synchronisation, hs);
                 break;
             case 0x02:
                 byte[] verarray = new byte[payload.Length - 1];
                 Array.Copy(payload, 1, verarray, 0,
                            (payload.Length - 1));
                 string VersionString = System.Text.Encoding.UTF8.GetString(verarray);
-                Logger.LogInfo(String.Format("ACK received on port {0}. Handshake complete, Resetting channels, Arduino library version '{1}'.", port.PortName, VersionString));
-                port.removeAllPacketSubscriptionRecords();
-                port.portStatus = KSPSerialPort.ConnectionStatus.CONNECTED;
+                Logger.LogInfo(String.Format("ACK received on port {0} at index {1}. Handshake complete, Resetting channels, Arduino library version '{2}'.", ports[portID].PortName, (int)portID, VersionString));
+                ports[portID].removeAllPacketSubscriptionRecords();
+                ports[portID].portStatus = KSPSerialPort.ConnectionStatus.CONNECTED;
 
                 break;
         }
@@ -393,11 +438,11 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             Logger.LogInfo(String.Format("Serial port {0} asked to be closed", portID));
         }
 
-        foreach (int packetID in port.getPacketSubscriptionList())
+        foreach (int packetID in ports[portID].getPacketSubscriptionList())
         {
 
             // Remove the callback of the serial port from the event caller
-            toSerialArray[packetID].Remove(port.sendPacket);
+            toSerialArray[packetID].Remove(ports[portID].sendPacket);
 
             if (config_verbose)
             {
@@ -405,33 +450,33 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
             }
         }
 
-        ClosePort();
+        ClosePort(portID);
     }
 
     private void registerCallback(byte portID, object data)
     {
         byte[] payload = (byte[])data;
-        byte idx;
+        byte packetID;
         for (int i = payload.Length - 1; i >= 0; i--)
         {
-            idx = payload[i];
+            packetID = payload[i];
 
 
-            if (!port.isPacketSubscribedTo(idx))
+            if (!ports[portID].isPacketSubscribedTo(packetID))
             {
                 if (config_verbose)
                 {
-                    Logger.LogInfo(String.Format("Serial port {0} subscribing to channel {1}", portID, idx));
+                    Logger.LogInfo(String.Format("Serial port {0} subscribing to channel {1}", portID, packetID));
                 }
                 // Adds the sendPacket method as a callback to the event that is called when a value in the toSerialArray is updated
-                toSerialArray[idx].Add(port.sendPacket);
-                onSerialChannelForceSendArray[idx].Fire(idx, null);
+                toSerialArray[packetID].Add(ports[portID].sendPacket);
+                onSerialChannelForceSendArray[packetID].Fire(packetID, null);
                 // Adds a record of the port subscribing to a packet to a list stored in the port instance.
-                port.addPacketSubscriptionRecord(idx);
+                ports[portID].addPacketSubscriptionRecord(packetID);
             }
             else
             {
-                if (config_verbose) Logger.LogInfo(String.Format("Serial port {0} trying to subscribe to channel {1} but is already subscribed. Ignoring it", portID, idx));
+                if (config_verbose) Logger.LogInfo(String.Format("Serial port {0} trying to subscribe to channel {1} but is already subscribed. Ignoring it", portID, packetID));
             }
         }
     }
@@ -443,9 +488,9 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
         for (int i = payload.Length - 1; i >= 0; i--)
         {
             idx = payload[i];
-            toSerialArray[idx].Remove(port.sendPacket);
+            toSerialArray[idx].Remove(ports[portID].sendPacket);
             // Removes the record of a port subscribing to a packet from the port's internal record
-            port.removePacketSubscriptionRecord(idx);
+            ports[portID].removePacketSubscriptionRecord(idx);
             if (config_verbose)
             {
                 Logger.LogInfo(String.Format("Serial port {0} ubsubscribed from channel {1}", portID, idx));
@@ -460,13 +505,15 @@ public class SimpitPlugin : BaseSpaceWarpPlugin
 
         if (channelID == 0)
         {
-            foreach (byte packetID in port.getPacketSubscriptionList())
+            if (config_verbose) Logger.LogInfo(String.Format("Request resending all channels"));
+            foreach (byte packetID in ports[portID].getPacketSubscriptionList())
             {
                 onSerialChannelForceSendArray[packetID].Fire(packetID, null);
             }
         }
         else
         {
+            if (config_verbose) Logger.LogInfo(String.Format("Request resending on channel {0}", channelID));
             onSerialChannelForceSendArray[channelID].Fire(channelID, null);
         }
     }

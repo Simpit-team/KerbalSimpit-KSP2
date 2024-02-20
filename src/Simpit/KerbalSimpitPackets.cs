@@ -23,6 +23,19 @@
         public static byte MonoPropellant = 16;
         public static byte EvaPropellant = 18;
 
+        //Propulsion Resources on KSP2
+        public static byte IntakeAir = 52;
+        //public static byte TestRocks = xx; //Available in KSP2 but seems to be unused
+        public static byte Hydrogen = 53;
+        public static byte HydrogenStage = 54;
+        //public static byte Methalox = xx; //Available in KSP2 but seems to be unused
+        //public static byte MethaloxStage = xx; //Available in KSP2 but seems to be unused
+        //public static byte MethaneAir = xx; //Available in KSP2 but seems to be unused
+        //public static byte MethaneAirStage = xx; //Available in KSP2 but seems to be unused
+        public static byte Uranium = 55;
+        //public static byte XenonEC = xx; //Available in KSP2 but seems to be unused
+        //public static byte XenonECStage = xx; //Available in KSP2 but seems to be unused
+
         // Vessel Resources
         public static byte ElectricCharge = 17;
         public static byte Ore = 19;
@@ -32,19 +45,6 @@
         public static byte TACLSWaste = 31;
         public static byte CustomResource1 = 32;
         public static byte CustomResource2 = 33;
-
-        //Propulsion Resources on KSP2
-        public static byte IntakeAir = 52;
-        public static byte TestRocks = 53;
-        public static byte Hydrogen = 54;
-        public static byte HydrogenStage = 55;
-        public static byte Methalox = 56;
-        public static byte MethaloxStage = 57;
-        public static byte MethaneAir = 58;
-        public static byte MethaneAirStage = 59;
-        public static byte Uranium = 60;
-        public static byte XenonEC = 61;
-        public static byte XenonECStage = 62;
 
         // Vessel Movement/Postion
         public static byte Altitude = 8;
@@ -70,6 +70,8 @@
         public static byte BurnTime = 40;
         public static byte CustomActionGroups = 41;
         public static byte TempLimit = 42;
+        public static byte AdvancedActionGroups = 56;
+        public static byte AdvancedCustomActionGroups = 57;
 
         // External Environment
         public static byte TargetInfo = 25;
@@ -79,6 +81,7 @@
         public static byte AtmoCondition = 44;
         public static byte VesselName = 46;
         public static byte VesselChange = 51;
+        public static byte Intersects = 60;
     }
 
     public static class InboundPackets
@@ -93,6 +96,8 @@
         public static byte ActionGroupActivate = 13;
         public static byte ActionGroupDeactivate = 14;
         public static byte ActionGroupToggle = 15;
+        public static byte SetSingleActionGroup = 58;
+        public static byte SetSingleCAG = 59;
         public static byte VesselRotation = 16;
         public static byte VesselTranslation = 17;
         public static byte WheelControl = 18;
@@ -154,7 +159,29 @@
         public static byte AbortBit = 64;
     }
 
-    public static class WarpControlValues
+    public static class AdvancedActionGroupIndexes
+    {
+        public const byte advancedStageAction = 0;
+        public const byte advancedGearAction = 1;
+        public const byte advancedLightAction = 2;
+        public const byte advancedRcsAction = 3;
+        public const byte advancedSasAction = 4;
+        public const byte advancedBrakesAction = 5;
+        public const byte advancedAbortAction = 6;
+        public const byte advancedSolarAction = 7;
+        public const byte advancedRadiatorAction = 8;
+        public const byte advancedScienceAction = 9;
+    };
+
+    public static class ActionGroupSettings
+    {
+        public const byte nothing = 0;
+        public const byte activate = 1;
+        public const byte deactivate = 2;
+        public const byte toggle = 3;
+    };
+
+    public static class WarpControlValuesKsp1
     {
         public const byte warpRate1 = 0;
         public const byte warpRate2 = 1;
@@ -168,6 +195,25 @@
         public const byte warpRatePhys2 = 9;
         public const byte warpRatePhys3 = 10;
         public const byte warpRatePhys4 = 11;
+        public const byte warpRateUp = 12;
+        public const byte warpRateDown = 13;
+        public const byte warpCancelAutoWarp = 255;
+    }
+
+    public static class WarpControlValuesKsp2
+    {
+        public const byte warpRate1 = 0;
+        public const byte warpRate2 = 1;
+        public const byte warpRate3 = 2;
+        public const byte warpRate4 = 3;
+        public const byte warpRate5 = 4;
+        public const byte warpRate6 = 5;
+        public const byte warpRate7 = 6;
+        public const byte warpRate8 = 7;
+        public const byte warpRate9 = 8;
+        public const byte warpRate10 = 9;
+        public const byte warpRate11 = 10;
+
         public const byte warpRateUp = 12;
         public const byte warpRateDown = 13;
         public const byte warpCancelAutoWarp = 255;

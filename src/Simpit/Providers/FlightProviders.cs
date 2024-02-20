@@ -1,8 +1,5 @@
 ﻿using KSP.Sim.impl;
-using Simpit.Providers;
-using Simpit;
 using System.Runtime.InteropServices;
-using static KSP.Api.UIDataPropertyStrings.View;
 using SpaceWarp.API.Game;
 using KSP.Sim.Definitions;
 using KSP.Game;
@@ -29,6 +26,9 @@ namespace Simpit.Providers
         protected override bool updateMessage(ref atmoConditionStruct message)
         {
             message.atmoCharacteristics = 0;
+            message.temperature = 0;
+            message.pressure = 0;
+            message.airDensity = 0;
 
             VesselComponent simVessel = null;
             try { simVessel = Vehicle.ActiveSimVessel; } catch { }
@@ -37,18 +37,16 @@ namespace Simpit.Providers
             CelestialBodyComponent body = simVessel.mainBody;
             if (body == null) return false;
 
-            if (body._celestialDataProvider.HasAtmosphere.GetValue())
+            if (body.hasAtmosphere)
             {
                 message.atmoCharacteristics |= AtmoConditionsBits.hasAtmosphere;
                 if (body.atmosphereContainsOxygen) message.atmoCharacteristics |= AtmoConditionsBits.hasOxygen;
-                if (body.atmosphereDepth >= simVessel.AltitudeFromSeaLevel) message.atmoCharacteristics |= AtmoConditionsBits.isVesselInAtmosphere;
+                if (simVessel._telemetryComponent.IsInAtmosphere) message.atmoCharacteristics |= AtmoConditionsBits.isVesselInAtmosphere;
 
-                message.temperature = (float)body.GetTemperature(simVessel.AltitudeFromSeaLevel);
-                message.pressure = (float)body.GetPressure(simVessel.AltitudeFromSeaLevel);
-                message.airDensity = (float)body.GetDensity(body.GetPressure(simVessel.AltitudeFromSeaLevel), body.GetTemperature(simVessel.AltitudeFromSeaLevel));
+                message.temperature = (float)simVessel._telemetryComponent.AtmosphericTemperature;
+                message.pressure = (float)simVessel._telemetryComponent.StaticPressure_kPa;
+                message.airDensity = (float)simVessel._telemetryComponent.AtmosphericDensity;
             }
-
-            //KSP1 What does this do??? FlightGlobals.ActiveVessel.mainBody.GetFullTemperature(FlightGlobals.ActiveVessel.CoMD);
 
             return false;
         }
@@ -86,7 +84,7 @@ namespace Simpit.Providers
             if (simVessel == null || tw == null) return false;
 
             myFlightStatus.flightStatusFlags = 0;
-            if (simVessel.IsVesselInFlight()) myFlightStatus.flightStatusFlags += FlightStatusBits.isInFlight;
+            if (simVessel.IsFlying) myFlightStatus.flightStatusFlags += FlightStatusBits.isInFlight;
             if (simVessel.IsKerbalEVA) myFlightStatus.flightStatusFlags += FlightStatusBits.isEva;
             if (simVessel.IsVesselRecoverable) myFlightStatus.flightStatusFlags += FlightStatusBits.isRecoverable;
             if (tw.IsPhysicsTimeWarp) myFlightStatus.flightStatusFlags += FlightStatusBits.isInAtmoTW;
