@@ -1,3 +1,6 @@
+
+![SimpitBannerFoto](https://github.com/Simpit-team/KerbalSimpit-KSP2/assets/22640558/71fc0948-2938-43ec-a498-ccd04b943b57)
+
 # Simpit
 This is a Kerbal Space Program 2 plugin to provide a serial connection interface for custom controllers.
 
